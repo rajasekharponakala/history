@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Early Indians — an interactive atlas of the book by Tony Joseph</title>
+<meta name="description" content="Timelines, charts, maps and every image from Early Indians by Tony Joseph, as an interactive visual companion.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%232a78d6'/%3E%3Ccircle cx='16' cy='16' r='7' fill='%23eb6834'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="progress" aria-hidden="true"></div>
+
+<header class="topbar">
+  <div class="wrap">
+    <a class="brand" href="#top"><i></i>Early Indians · Atlas</a>
+    <nav class="chapnav" aria-label="Sections"></nav>
+    <div class="bar-actions">
+      <button class="icon-btn" id="searchBtn" aria-label="Search (press / or Ctrl+K)" title="Search · / or Ctrl+K">⌕</button>
+      <button class="icon-btn" id="themeBtn" aria-label="Toggle light / dark theme" title="Toggle theme">◐</button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+<!-- ===================== HERO ===================== -->
+<section class="hero" id="top">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow">An interactive companion</span>
+      <h1>Early<br>Indians</h1>
+      <p class="lede">Tony Joseph’s <em>The Story of Our Ancestors and Where We Came From</em> — as a living atlas. 65,000 years of migration, 4 chapters, 48 pictures, 29 charts and one very long timeline.</p>
+      <div class="cta">
+        <a class="btn primary" href="#timeline">Open the master timeline →</a>
+        <a class="btn" href="#intro">Start at the beginning</a>
+        <button class="btn" onclick="document.getElementById('searchBtn').click()">Search <span class="kbd">/</span></button>
+      </div>
+    </div>
+    <div class="cover3d"><figure><img src="assets/img/cover.jpg" alt="Cover of Early Indians by Tony Joseph, showing the Harappan dancing-girl bronze" width="523" height="800"></figure></div>
+  </div>
+  <div class="wrap">
+    <div class="glance">
+      <div><b data-count="65000">65,000</b><span>years since the First Indians arrived</span></div>
+      <div><b>50–65%</b><span>of Indian genome ancestry traces to them</span></div>
+      <div><b data-count="700">700</b><span>years of the Mature Harappan era, with no sign of any city attacked</span></div>
+      <div><b data-count="22" data-suf="%">22%</b><span>Steppe ancestry in the Swat valley samples (≈1200–800 BCE)</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== MASTER TIMELINE ===================== -->
+<section class="block" id="timeline" style="--accent: var(--c-ch1)">
+  <div class="wrap">
+    <div class="subhead" style="margin-top:0"><h3>The whole story on one line</h3><span id="tlCount"></span></div>
+    <p style="color:var(--text-2);max-width:70ch;margin-bottom:1rem">Switch the scale to zoom between deep time, the Holocene and the Bronze Age; filter by chapter; click any event. Drag to pan. On a keyboard, Tab moves between events.</p>
+    <div class="tl-controls">
+      <div class="seg" id="tlModes" role="group" aria-label="Timeline scale"></div>
+      <div class="chips" id="tlChips" role="group" aria-label="Filter by chapter"></div>
+    </div>
+    <div class="tl-scroll" id="tl" tabindex="-1"></div>
+    <div class="tl-detail" id="tlDetail" aria-live="polite"></div>
+  </div>
+</section>
+
+<!-- ===================== INTRO ===================== -->
+<section class="block chapter" id="intro" data-ch="intro">
+  <div class="wrap">
+    <div class="chap-head reveal"><div class="num">00</div><div><h2>How We, the Indians, Came to Be</h2><p class="tag">Deep time, cousins and the 0.1% genome</p><p class="blurb">The story of our ancestors — who came from Africa, west Asia, east Asia and central Asia and made this land theirs over the last 65,000 years.</p></div></div>
+
+    <div class="bento reveal">
+      <div class="tile"><b data-count="300000">300,000</b><span>years of Homo sapiens, against 3.8 billion years of life on Earth</span></div>
+      <div class="tile"><b>~2%</b><span>Neanderthal DNA in every non-African; 3–6% Denisovan in some</span></div>
+      <div class="tile"><b>0.1%</b><span>the genome difference between two people — still ~3 million letters</span></div>
+      <div class="tile"><b>2 × 10⁶</b><span>km/h: the Milky Way’s speed, while you “sit still”</span></div>
+    </div>
+
+    <div class="subhead"><h3>The story in five beats</h3></div>
+    <div class="beats reveal">
+      <details open><summary>We are moving even when we feel still</summary><div class="body">The book opens with the Milky Way racing at 2.1 million km/h. Each discovery — Earth is one of many planets, the Sun an average star — made humans feel smaller, and wiser people felt awe at the scale. Biology has done the same: we are not a special case but part of a continuum.</div></details>
+      <details><summary>Our evolutionary cousins were a lot like us</summary><div class="body">Homo erectus, Homo heidelbergensis, Neanderthals and Denisovans had large brains and tools often indistinguishable from ours. We mated with them: all non-Africans carry about 2% Neanderthal DNA, and some groups carry 3–6% Denisovan DNA. Chimpanzees share 96% of our DNA.</div></details>
+      <details><summary>Ancient DNA is rewriting prehistory</summary><div class="body">Archaeology, linguistics and genetics now converge. Ancient DNA shows Europe’s population was largely replaced twice in 10,000 years (west Asian farmers ~9000 years ago; Steppe pastoralists ~5000 years ago) — and tells the Indian story with new precision.</div></details>
+      <details><summary>No ‘pure’ group exists</summary><div class="body">All of today’s Indian population groups draw their genes from several migrations. The Indo-European migration is a fact — and so is the truth of multiple migrations and large-scale mixing over millennia. India is a civilization drawn from many sources.</div></details>
+      <details><summary>The Indian ‘pizza’</summary><div class="body">The book’s metaphor: a base of First Indians (~65,000 years ago), a sauce of Zagros farmers, a sprinkle of Steppe cheese, regional toppings from east and south-east Asia — and small marks from many later arrivals. Explore it in the Epilogue.</div></details>
+    </div>
+
+    <div class="subhead"><h3>Cousins and numbers</h3><span>charts</span></div>
+    <div class="grid">
+      <figure data-chart="hominins" data-span="2"></figure>
+      <figure data-chart="dna"></figure>
+      <figure data-chart="cosmic"></figure>
+    </div>
+    <div class="subhead"><h3>Faces from the Introduction</h3><span>tap to enlarge</span></div>
+    <div class="strip" data-imgs="homo-erectus,homo-heidelbergensis,homo-neanderthalensis,map-asia"></div>
+  </div>
+</section>
+
+<!-- ===================== CHAPTER 1 ===================== -->
+<section class="block chapter" id="ch1" data-ch="ch1">
+  <div class="wrap">
+    <div class="chap-head reveal"><div class="num">01</div><div><h2>The First Indians</h2><p class="tag">c. 65,000 years ago — Out of Africa to the subcontinent</p><p class="blurb">Geneticists say 65,000 years; some archaeologists say 120,000. The chapter reconciles them with climate, fossils and DNA.</p></div></div>
+
+    <div class="bento reveal">
+      <div class="tile"><b>70k</b><span>years ago: the likely date of the successful exodus (L3)</span></div>
+      <div class="tile"><b>70–90%</b><span>of Indian mtDNA lineages are First-Indian in origin</span></div>
+      <div class="tile"><b>10–40%</b><span>of Y-chromosome lineages are First-Indian</span></div>
+      <div class="tile"><b>74k</b><span>years ago: Toba, the most violent eruption in two million years</span></div>
+    </div>
+
+    <div class="subhead"><h3>Out of Africa, step by step</h3><span>drag the slider or press play</span></div>
+    <div class="journey reveal">
+      <div class="stage"><div id="jmap"></div></div>
+      <div class="ctrl">
+        <div><div class="ya" aria-live="polite"><span id="jYa"></span> <small style="font:600 .9rem var(--font-ui);color:var(--text-3)">years ago</small></div>
+          <h4 id="jT" style="margin:.5rem 0 .3rem"></h4><p id="jD" style="color:var(--text-2);font-size:.92rem"></p></div>
+        <div><input type="range" id="jRange" min="0" max="7" step="1" aria-label="Time step"><div class="steps" id="jSteps"></div>
+          <div style="margin-top:.6rem"><button class="btn" id="jPlay" style="padding:.5rem .9rem">▶ Play</button></div></div>
+      </div>
+    </div>
+
+    <div class="subhead"><h3>Genetics in three zooms</h3><span>the primer every later chapter relies on</span></div>
+    <div class="card reveal" style="--accent:var(--c-ch1)"><div id="primer"></div></div>
+
+    <div class="subhead"><h3>The story in five beats</h3></div>
+    <div class="beats reveal">
+      <details open><summary>Bhimbetka: a place to feel deep time</summary><div class="body">A rock-shelter complex in Madhya Pradesh occupied for ~100,000 years, with cup-like depressions that may be the earliest art by any Homo species. But ‘first modern humans in India’ means two things: the first Homo sapiens to set foot here (perhaps ~120,000 years ago) and the direct ancestors of today’s Indians (~65,000 years ago).</div></details>
+      <details><summary>Genetics: a one-time bottleneck</summary><div class="body">All non-Africans descend from one mtDNA haplogroup, L3, through its daughters M and N (N has R). Only three Y-chromosome lineages — C, D, F — left Africa. L3 arose ~70,000 years ago, N 61,000, M 48,000 — squeezing OoA into a window around 70–65,000 years ago.</div></details>
+      <details><summary>Climate opens the door</summary><div class="body">Marine Isotope Stage data show a cold, dry glacial MIS 4 (71–57k years ago) followed by a warmer, wetter MIS 3 when Arabia turned green — and a southern coastal route became possible across Bab el Mandeb.</div></details>
+      <details><summary>Fast along the coast</summary><div class="body">Modern humans were in Australia by ~65,000 years ago (59,300–70,700) and Sumatra by 63,000–73,000, which means the walk from Yemen was rapid — coastal hunter-gatherers moving without having to relearn their world.</div></details>
+      <details><summary>Meeting the archaic locals</summary><div class="body">India was already rich in archaic humans — tools at Attirampakkam date to ~385,000 years ago (Middle Palaeolithic), the Hathnora skull to ~250,000. At Jwalapuram, Middle Palaeolithic tools lie beneath Toba ash (~77,000). By ~35,000 years ago the archaic Homo likely vanished and the First Indians’ population exploded with microlithic technology; South Asia held ‘most of humanity’.</div></details>
+    </div>
+
+    <div class="subhead"><h3>The evidence in charts</h3></div>
+    <div class="grid">
+      <figure data-chart="evidence" data-span="2"></figure>
+      <figure data-chart="haplo"></figure>
+      <figure data-chart="tree" data-span="2"></figure>
+      <figure data-chart="firstShare"></figure>
+      <figure data-chart="mis" data-span="3"></figure>
+    </div>
+
+    <div class="subhead"><h3>Maps, shelters and people</h3></div>
+    <div class="strip" data-imgs="bhimbetka-shelter,bhimbetka-cupules,bhimbetka-paintings,map-four-paths,map-peopling-world,onge,bonda,gond"></div>
+  </div>
+</section>
+
+<!-- ===================== CHAPTER 2 ===================== -->
+<section class="block chapter" id="ch2" data-ch="ch2">
+  <div class="wrap">
+    <div class="chap-head reveal"><div class="num">02</div><div><h2>The First Farmers</h2><p class="tag">c. 7000 BCE — Mehrgarh and the Zagros migrants</p><p class="blurb">Agriculture arrives at Mehrgarh; ancient DNA shows Iranian farmers moving east and mixing with First Indians.</p></div></div>
+
+    <div class="bento reveal">
+      <div class="tile"><b>7000</b><span>BCE: Mehrgarh begins at the foot of the Bolan Pass</span></div>
+      <div class="tile"><b>200 ha</b><span>at its largest, one of the biggest habitations of its period</span></div>
+      <div class="tile"><b>&gt;90%</b><span>of Mehrgarh’s seeds: naked six-row barley</span></div>
+      <div class="tile"><b>14–42%</b><span>First-Indian ancestry in Indus outliers at Gonur & Shahr-i-Sokhta</span></div>
+    </div>
+
+    <div class="subhead"><h3>The story in five beats</h3></div>
+    <div class="beats reveal">
+      <details open><summary>Climate resets, population explodes</summary><div class="body">After the last glacial period, the Holocene began ~11,700 years ago. Warming made farming viable and the human population ‘started exploding’ in a manner never seen before.</div></details>
+      <details><summary>Mehrgarh: a village that became a landmark</summary><div class="body">Discovered in 1976, the site shows cultivated barley and wheat, domesticated animals, mud-brick houses and long-range trade (seashells). Pottery only appears around 6000 BCE. The settlement was abandoned between 2600 and 2000 BCE in favour of nearby Nausharo.</div></details>
+      <details><summary>Where did the Mehrgarhians come from?</summary><div class="body">West Asia’s Fertile Crescent had domesticated emmer and einkorn wheat by 8500–8200 BCE and barley by ~8000 BCE. Evidence at Mehrgarh and farther east and west points to a cultural continuum from Mesopotamia’s eastern edge to the Indus margins.</div></details>
+      <details><summary>Ancient DNA answers: Zagros farmers</summary><div class="body">The Zagros people of 7000–8000 BCE lacked Anatolian ancestry that others in the Fertile Crescent had. Harappan-period outliers carry both First Indian and Zagros ancestry; they were migrants from the Indus to Gonur and Shahr-i-Sokhta. The direction of movement is from Iran toward India.</div></details>
+      <details><summary>Mixed lineages, mixed ancestry</summary><div class="body">All Indian groups are mixes, in different proportions, of First Indians and west Eurasians (20–80% depending on group). Maternal lines are mostly First Indian (70–90%); over 60% of paternal lines come from later migrations.</div></details>
+    </div>
+
+    <div class="subhead"><h3>Data from the first villages</h3></div>
+    <div class="grid">
+      <figure data-chart="farming" data-span="2"></figure>
+      <figure data-chart="barley"></figure>
+      <figure data-chart="hectares"></figure>
+      <figure data-chart="anatolian"></figure>
+      <figure data-chart="bmac"></figure>
+      <figure data-chart="outliers"></figure>
+      <figure data-chart="later"></figure>
+      <figure data-chart="westEur"></figure>
+    </div>
+    <div class="subhead"><h3>Maps and objects</h3></div>
+    <div class="strip" data-imgs="map-fertile-crescent,mehrgarh-vessel,mehrgarh-figurines"></div>
+  </div>
+</section>
+
+<!-- ===================== CHAPTER 3 ===================== -->
+<section class="block chapter" id="ch3" data-ch="ch3">
+  <div class="wrap">
+    <div class="chap-head reveal"><div class="num">03</div><div><h2>The First Urbanites: The Harappans</h2><p class="tag">2600–1900 BCE — the largest civilization of its time</p><p class="blurb">No palaces, no obvious temples, uniform weights, remarkable plumbing — and a script no one has yet cracked.</p></div></div>
+
+    <div class="bento reveal">
+      <div class="tile"><b>~1M km²</b><span>area at its height — about a third of today’s India</span></div>
+      <div class="tile"><b>700</b><span>years (2600–1900 BCE) with no evidence of any city attacked or burnt</span></div>
+      <div class="tile"><b>~700</b><span>wells at Mohenjo-daro alone, plus the Great Bath</span></div>
+      <div class="tile"><b>1 : 2 : 4</b><span>height : width : length — the uniform brick ratio</span></div>
+      <div class="tile"><b>74×26×7 m</b><span>Dholavira’s eastern reservoir, the largest of its kind in the ancient world</span></div>
+      <div class="tile"><b>≤ 5 M</b><span>highest population estimate for the Mature phase, over ~1M km²</span></div>
+    </div>
+
+    <div class="subhead"><h3>The story in five beats</h3></div>
+    <div class="beats reveal">
+      <details open><summary>A civilization like no other</summary><div class="body">Unlike Mesopotamia, there are no clearly identified temples or palaces, no sculptures glorifying kings, no royal burial hoards and no pyramids. The ‘priest-king’ is only 17.5 cm tall. Seals show conflict between supernatural beings or humans and animals — humans fighting humans is almost absent from the record.</div></details>
+      <details><summary>Public infrastructure over private palaces</summary><div class="body">Grid-like streets, covered drains, indoor bathing platforms and toilets in houses, public wells for traders and visitors, and — at Dholavira — a sophisticated water-harvesting system with dammed streams, many reservoirs and a stone storm-water drain you can walk in.</div></details>
+      <details><summary>Standardization at scale</summary><div class="body">A single system of cubic chert weights from end to end, bricks in a 1:2:4 ratio, a common script and seals — whereas Mesopotamia had a medley of weighing systems. And hundreds of thousands of bangles, for both men and women.</div></details>
+      <details><summary>From villages to cities</summary><div class="body">Early Harappan (5500–2600 BCE) towns such as Kalibangan, Rakhigarhi, Banawali and Rahman Dheri grew into the Mature phase over four or five generations (100–150 years). The first script-like markings appear at Harappa about 3300 BCE — the same time as early writing in Mesopotamia, Egypt and China.</div></details>
+      <details><summary>Decline: drought, not invasion</summary><div class="body">In the Late Harappan phase (1900–1300 BCE) cities decline and fade, primarily due to a long drought that hit civilizations in west Asia, Egypt and China as well. The sauce of Harappan ancestry then spreads across the subcontinent.</div></details>
+    </div>
+
+    <div class="subhead"><h3>Harappa vs Mesopotamia</h3><span>as set out in the chapter</span></div>
+    <div class="compare reveal">
+      <div class="col"><h4><i style="background:var(--s2)"></i>Harappan Civilization</h4><ul>
+        <li>No clearly identified temple in the whole civilization</li><li>No clearly recognizable palaces; no monuments to kings</li><li>Burials: ~15 pots of food and drink on average; few ornaments</li><li>One standard of cubic chert weights</li><li>Hundreds of thousands of bangles</li><li>Elaborate water systems; private latrines; public wells</li><li>Very little depiction of human-on-human violence; no war weaponry</li></ul></div>
+      <div class="col"><h4><i style="background:var(--s1)"></i>Mesopotamia</h4><ul>
+        <li>32 ziggurats found (28 in Iraq, 4 in Iran)</li><li>Palaces and sculptures glorifying kings</li><li>Royal burials with hoards of jewellery — sometimes servants too</li><li>A medley of weighing systems by region and commodity</li><li>A few bangles per excavation</li><li>Public conveniences not matched by any contemporary civilization</li><li>Uruk (≈3200 BCE) — first ‘city’ by Gordon Childe’s criteria</li></ul></div>
+    </div>
+
+    <div class="subhead"><h3>Harappa in numbers</h3></div>
+    <div class="grid">
+      <figure data-chart="phases" data-span="2"></figure>
+      <figure data-chart="area"></figure>
+      <figure data-chart="ziggurats"></figure>
+      <figure data-chart="unicorn"></figure>
+      <figure data-chart="lang"></figure>
+    </div>
+
+    <div class="subhead"><h3>Cities, seals and everyday life</h3><span>sites & infrastructure</span></div>
+    <div class="strip" data-imgs="harappa-ruins,great-bath,dholavira-reservoir,mohenjo-drain,weights,bangle,map-harappan,priest-king,double-bun,mother-goddess"></div>
+    <div class="subhead"><h3>Seals and the unread script</h3><span>including Mesopotamian comparisons</span></div>
+    <div class="strip" data-imgs="unicorn-seal,peepul-seal,buffalo-seal,tiger-seal,kalibangan-seal,harappan-seal-tigers,script-seal,akkadian-seal-imprint,akkadian-seal,egypt-dagger,stele-vultures,map-languages-sasia"></div>
+    <p class="note">The script is undeciphered. The chapter surveys readings by Iravatham Mahadevan (Dravidian grammar signs) and Asko Parpola (the fish sign as <em>miin</em>, ‘fish’ and ‘star’), and notes the Elamo-Dravidian hypothesis.</p>
+  </div>
+</section>
+
+<!-- ===================== CHAPTER 4 ===================== -->
+<section class="block chapter" id="ch4" data-ch="ch4">
+  <div class="wrap">
+    <div class="chap-head reveal"><div class="num">04</div><div><h2>The Last Migrants: The ‘Aryans’</h2><p class="tag">2000–1000 BCE — Steppe pastoralists enter South Asia</p><p class="blurb">Ancient DNA, linguistics and the Rigveda tell one story: a male-driven migration from the Eurasian Steppe in the second millennium BCE.</p></div></div>
+
+    <div class="bento reveal">
+      <div class="tile"><b>98.4%</b><span>of Central/South Asian R1a lineages are Z93</span></div>
+      <div class="tile"><b>22%</b><span>Steppe ancestry in Swat samples (≈1200–800 BCE)</span></div>
+      <div class="tile"><b>68%</b><span>R1a-Z93 frequency in the Bronze Age Steppe (2000–1400 BCE)</span></div>
+      <div class="tile"><b>~75%</b><span>of Indians speak an Indo-European language, vs 94% in western Europe</span></div>
+    </div>
+
+    <div class="subhead"><h3>The story in five beats</h3></div>
+    <div class="beats reveal">
+      <details open><summary>Languages and the Yamnaya</summary><div class="body">Indo-European languages stretch from Europe to India. The Yamnaya — Steppe herders with wheels, wagons and horses — burst upon Europe around 3000 BCE; Corded Ware culture followed from ~2900 BCE (about 75% Yamnaya-related ancestry), and Bell Beaker spread into Britain, where ≥90% of Bronze Age ancestry came from Beaker-related people.</div></details>
+      <details><summary>A male-driven expansion</summary><div class="body">Yamnaya Y-chromosomes were nearly all of a few types while mitochondrial DNA was diverse: male descendants of high-status lines succeeded. In Iberia, about 30% of the population was replaced but ~90% of Y-chromosomes among Yamnaya-ancestry males were of Steppe origin.</div></details>
+      <details><summary>The Y-chromosome points to the Steppe</summary><div class="body">R1a-M417 splits around 3800 BCE into Z282 (Europe) and Z93 (Central/South Asia). The oldest R1a is from the Steppe, and R1a is more frequent in upper castes than lower ones. Bronze Age Steppe samples show Z93 at up to 68%.</div></details>
+      <details><summary>Swat tells the timeline</summary><div class="body">BMAC and Shahr-i-Sokhta samples (3100–2200 BCE) have no Steppe ancestry; Swat samples ≈1200–800 BCE have ~22%. Steppe pastoralists began moving south only around 2100 BCE. Rigveda parallels to Sintashta burials (kurgan, roofed chambers, horse sacrifice) add to the case.</div></details>
+      <details><summary>Layering, not replacement</summary><div class="body">In Europe, successive migrations largely replaced earlier peoples. In South Asia First-Indian ancestry still makes up 50–65% of the genome for most groups; Dravidian languages persist (~20%). Strongest Steppe signals: ten of 140 groups, mostly traditionally priestly groups in the north.</div></details>
+    </div>
+
+    <div class="subhead"><h3>Evidence in charts</h3></div>
+    <div class="grid">
+      <figure data-chart="steppeWaves" data-span="2"></figure>
+      <figure data-chart="r1a"></figure>
+      <figure data-chart="steppe" data-span="2"></figure>
+      <figure data-chart="langCmp"></figure>
+      <figure data-chart="elevated"></figure>
+    </div>
+
+    <div class="subhead"><h3>Maps of migration and language</h3></div>
+    <div class="strip" data-imgs="map-steppe-europe,map-west-eurasian,map-indo-european,map-indo-aryan,map-languages-sasia"></div>
+    <div class="subhead"><h3>Dholavira and the Rigveda’s ‘shishna-deva’</h3><span>a cultural contrast the book highlights</span></div>
+    <div class="strip" data-imgs="dholavira-columns,dholavira-statue,dholavira-statue2"></div>
+
+    <div class="subhead"><h3>Appendix · The Ghaggar–Hakra question</h3></div>
+    <div class="beats reveal">
+      <details><summary>The claim</summary><div class="body">Some argue the Ghaggar–Hakra is the Rigveda’s Sarasvati, which ‘weakened’ around 2000 BCE, so Vedic people must have been present in the Harappan era — meaning ‘the Vedic people are the Harappans’.</div></details>
+      <details><summary>The problems</summary><div class="body">The Rigveda’s ‘mighty’ Sarasvati may be the Harahvaiti in Afghanistan (h ↔ s interchange); the Harappan civilization is best described as based on two river systems, the Indus and the Ghaggar–Hakra; and none of this offsets the ancient-DNA evidence for Steppe migration.</div></details>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== EPILOGUE ===================== -->
+<section class="block chapter" id="epi" data-ch="epi">
+  <div class="wrap">
+    <div class="chap-head reveal"><div class="num">05</div><div><h2>Seeing History the Right Side Up</h2><p class="tag">Caste, the Indian pizza and what the story means</p><p class="blurb">A subjective commentary on what the book tells us — and an examination of how caste came to be.</p></div></div>
+
+    <div class="subhead" style="margin-top:0"><h3>The Indian pizza</h3><span>tap a layer</span></div>
+    <div class="pizza reveal" id="pizza"></div>
+
+    <div class="bento reveal" style="margin-top:2rem">
+      <div class="tile"><b>2200 BCE → 100 CE</b><span>extensive mixing among Indian groups</span></div>
+      <div class="tile"><b>~100 CE</b><span>mixing ends; jati groups become endogamous</span></div>
+      <div class="tile"><b>2–3×</b><span>genetic differentiation among jati groups in one village vs between northern and southern Europeans (Reich, as quoted)</span></div>
+      <div class="tile"><b>~8%</b><span>of the population are adivasis — ‘the tribals are us’</span></div>
+    </div>
+
+    <div class="subhead"><h3>The story in five beats</h3></div>
+    <div class="beats reveal">
+      <details open><summary>Layers, not borders</summary><div class="body">The base was laid ~65,000 years ago; the sauce after 7000 BCE by Zagros herders who mixed with First Indians and built the Harappan Civilization; the cheese after 2000 BCE — much more in the north than in the south; then the Austroasiatic and Tibeto-Burman toppings, and later small marks from Greeks, Jews, Huns, Sakas, Parsis, Syrians, Mughals, Portuguese, British and Siddis.</div></details>
+      <details><summary>The tribals are ‘us’</summary><div class="body">Adivasis carry First Indian ancestry like everyone else — and are the foundational population. The most recognizable image of the Harappan Civilization, the dancing girl, could well be a tribal girl.</div></details>
+      <details><summary>Aryavarta and Magadha</summary><div class="body">Grierson and Southworth’s ‘inner’ vs ‘outer’ Indo-Aryan languages map onto Aryavarta vs the ‘mleccha-desas’. Patanjali (c. 150 BCE) defined Aryavarta narrowly; Ganga-plain urbanization (c. 500 BCE) and the first empire, the Mauryas (322–180 BCE), arose outside it.</div></details>
+      <details><summary>How caste ‘closed’</summary><div class="body">The 2013 study found extensive mixing between 2200 BCE and 100 CE, then a shift to endogamy — consistent with a new ideology taking hold around 100 CE. The caste (jati) system is not mentioned in the Rigveda and is referred to only in later texts.</div></details>
+      <details><summary>Genes and milk</summary><div class="body">Lactase persistence (the 13910T mutation, identical to the European one, from ~7,500 years ago) is found in about a fifth of Indians, from over 40% in parts of the north and west to under 1% in parts of the north-east.</div></details>
+    </div>
+
+    <div class="subhead"><h3>Caste, milk and belonging</h3></div>
+    <div class="grid">
+      <figure data-chart="caste" data-span="2"></figure>
+      <figure data-chart="lactase"></figure>
+      <figure data-chart="adivasi"></figure>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== RESEARCH ===================== -->
+<section class="block" id="research" style="--accent:var(--c-ch1)">
+  <div class="wrap">
+    <div class="subhead" style="margin-top:0"><h3>How we came to know: the research timeline</h3><span>discoveries and studies named in the book</span></div>
+    <div class="vtl" id="research-tl"></div>
+  </div>
+</section>
+
+<!-- ===================== GALLERY ===================== -->
+<section class="block" id="gallery" style="--accent:var(--c-ch3)">
+  <div class="wrap">
+    <div class="subhead" style="margin-top:0"><h3>Every picture in the book</h3><span id="galCount"></span></div>
+    <div class="gal-bar">
+      <div class="chips" id="galChips" role="group" aria-label="Filter images by chapter"></div>
+      <select class="search" id="galKind" aria-label="Filter by image type" style="flex:0 1 180px"><option value="all">All types</option></select>
+      <input class="search" id="galQ" type="search" placeholder="Search images…" aria-label="Search images">
+      <button class="btn" id="galPlay" style="padding:.5rem 1rem">Slideshow ▶</button>
+    </div>
+    <div class="masonry" id="masonry"></div>
+  </div>
+</section>
+</main>
+
+<footer class="site"><div class="wrap">
+  <p><b>Early Indians: The Story of Our Ancestors and Where We Came From</b> by Tony Joseph (Juggernaut Books, 2018). This is an unofficial visual study guide built from the book’s text, maps and photographs; all figures and images belong to their respective authors and credited sources. Read the book for the full argument and references.</p>
+  <p style="margin-top:.8rem">Chart colours use a validated colour-blind-safe palette; every chart has a data table behind the “Data” toggle. Press <span class="kbd">/</span> or <span class="kbd">Ctrl</span>+<span class="kbd">K</span> to search.</p>
+</div></footer>
+
+<!-- Lightbox -->
+<dialog id="lightbox" aria-label="Image viewer">
+  <div class="box">
+    <div class="pic"><img id="lbImg" alt=""></div>
+    <div class="info">
+      <span class="pill" id="lbPill"></span>
+      <h3 id="lbTitle"></h3><p id="lbCap"></p>
+      <button class="btn" id="lbGo" style="width:fit-content">Jump to chapter ↗</button>
+      <div class="nav"><button class="icon-btn" id="lbPrev" aria-label="Previous image">←</button><button class="icon-btn" id="lbNext" aria-label="Next image">→</button><span id="lbCount" style="color:var(--text-3);font-size:.85rem"></span><button class="icon-btn" id="lbClose" aria-label="Close" style="margin-left:auto">✕</button></div>
+    </div>
+  </div>
+</dialog>
+
+<!-- Command palette -->
+<dialog id="palette" aria-label="Search">
+  <div class="box">
+    <input id="pIn" type="search" placeholder="Search events, facts, images, charts…" aria-label="Search">
+    <ul id="pList" role="listbox"></ul>
+    <div class="hint"><span><span class="kbd">↑</span> <span class="kbd">↓</span> navigate</span><span><span class="kbd">↵</span> go</span><span><span class="kbd">esc</span> close</span></div>
+  </div>
+</dialog>
+
+<script src="js/data.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
