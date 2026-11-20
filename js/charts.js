@@ -45,10 +45,22 @@
     el.append(s); return s;
   };
   const txt = (x, y, s, cls = "t-sec", anchor = "start", extra = {}) => $("text", { x, y, class: cls, "text-anchor": anchor, ...extra }, s);
+  // Row labels sit on their own line above each mark; on narrow cards long labels
+  // used to run past the edge. Truncate with an ellipsis and keep the full text as a <title>.
+  function fitLabels(s, w) {
+    s.querySelectorAll("text.t-sec").forEach(t => {
+      if (+t.getAttribute("x") !== 0 || !t.getComputedTextLength) return;
+      const full = t.textContent; if (t.getComputedTextLength() <= w - 4) return;
+      let lo = 0, hi = full.length;
+      while (lo < hi) { const mid = (lo + hi + 1) >> 1; t.textContent = full.slice(0, mid) + "…"; if (t.getComputedTextLength() <= w - 4) lo = mid; else hi = mid - 1; }
+      t.textContent = full.slice(0, lo).trimEnd() + "…"; t.append($("title", {}, full));
+    });
+  }
 
   /* ---------- horizontal bars / lollipops ---------- */
   function hbar(el, rows, o = {}) {
-    const w = W(el), rowH = o.rowH || 50, padR = 70, top = 4;
+    const valTxt = r => o.fmt ? o.fmt(r) : fmtN(r.value) + (o.unit || "");
+    const w = W(el), rowH = o.rowH || 50, padR = Math.max(70, Math.max(...rows.map(r => valTxt(r).length)) * 7 + (o.style === "lollipop" ? 22 : 14)), top = 4;
     const h = rows.length * rowH + top + (o.log ? 22 : 4);
     const s = svgRoot(el, w, h, o.label);
     const max = o.max || Math.max(...rows.map(r => r.value));
@@ -80,6 +92,7 @@
       hit.setAttribute("aria-label", `${r.label}: ${o.fmt ? o.fmt(r) : r.value + (o.unit || "")}`);
       s.append(hit);
     });
+    fitLabels(s, w);
   }
   // bar with rounded data-end only (flat on baseline)
   function roundEnd(x, y, len, hgt) {
@@ -111,6 +124,7 @@
       hit.setAttribute("aria-label", `${r.label}: ${label}`);
       s.append(hit);
     });
+    fitLabels(s, w);
   }
 
   /* ---------- donut ---------- */
@@ -163,6 +177,7 @@
         x += len;
       });
     });
+    fitLabels(s, w);
     legend(el, [...new Map(rows.flatMap(r => r.parts).map(p => [p.label, p])).values()].map(p => ({ label: p.label, color: col(p.slot) })));
   }
 
@@ -210,7 +225,7 @@
       s.append($("line", { x1: x, x2: x, y1: top, y2: h - axisH, class: "gl" }),
         txt(Math.min(Math.max(x, 12), bw - 12), h - 8, o.tickFmt ? o.tickFmt(t) : fmtYa(t), "t-mut", "middle"));
     });
-    if (o.nowLabel) s.append(txt(bw, h - 8, o.nowLabel, "t-mut", "end"));
+    if (o.nowLabel && w > 460) s.append(txt(bw, h - 8, o.nowLabel, "t-mut", "end"));
     rows.forEach((r, i) => {
       const y = top + i * rowH, color = col(r.slot || 1);
       s.append(txt(0, y + 15, r.label, "t-sec"));
@@ -238,6 +253,7 @@
         s.append(txt(fits ? xr : xl, y + 38, short, "t-pri t-num", fits ? "start" : "end"));
       }
     });
+    fitLabels(s, w);
   }
 
   /* ---------- column chart (MIS) ---------- */

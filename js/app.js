@@ -25,12 +25,15 @@
   const root = document.documentElement;
   const saved = store.get("ei-theme");
   if (saved) root.dataset.theme = saved;
-  $("#themeBtn").addEventListener("click", () => {
-    const dark = (root.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")) === "dark";
-    root.dataset.theme = dark ? "light" : "dark"; store.set("ei-theme", root.dataset.theme);
-    redrawAll();
-  });
-  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => redrawAll());
+  const isDark = () => (root.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")) === "dark";
+  const syncTheme = () => {
+    const d = isDark(), b = $("#themeBtn");
+    b.setAttribute("aria-label", d ? "Switch to light theme" : "Switch to dark theme"); b.firstElementChild.textContent = d ? "☀" : "☾";
+    $$('meta[name="theme-color"]').forEach(m => m.setAttribute("content", d ? "#121211" : "#fcfcfb"));
+  };
+  $("#themeBtn").addEventListener("click", () => { vt(() => { root.dataset.theme = isDark() ? "light" : "dark"; store.set("ei-theme", root.dataset.theme); syncTheme(); }); });
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", syncTheme);
+  syncTheme();
 
   const bar = $(".progress");
   const onScroll = () => { const h = document.documentElement; bar.style.setProperty("--p", (h.scrollTop / Math.max(1, h.scrollHeight - h.clientHeight)).toFixed(4)); };
@@ -38,12 +41,21 @@
 
   // chapter nav + scroll spy
   const nav = $(".chapnav");
-  const navItems = [["timeline", "Timeline"], ...CH.map(c => [c.id, c.short]), ["research", "Research"], ["gallery", "Gallery"]];
+  const navItems = [["timeline", "Timeline"], ["atlas", "Atlas"], ...CH.map(c => [c.id, c.short]), ["research", "Research"], ["gallery", "Gallery"]];
   nav.innerHTML = navItems.map(([id, l]) => `<a href="#${id}" data-spy="${id}">${l}</a>`).join("");
   const spy = new IntersectionObserver(es => es.forEach(e => {
-    if (e.isIntersecting) $$("[data-spy]", nav).forEach(a => a.setAttribute("aria-current", a.dataset.spy === e.target.id));
+    if (!e.isIntersecting) return;
+    $$("[data-spy]", nav).forEach(a => { const on = a.dataset.spy === e.target.id; a.setAttribute("aria-current", on); if (on && nav.scrollWidth > nav.clientWidth) nav.scrollTo({ left: a.offsetLeft - nav.clientWidth / 2 + a.offsetWidth / 2, behavior: "smooth" }); });
   }), { rootMargin: "-45% 0px -50% 0px" });
   navItems.forEach(([id]) => { const s = document.getElementById(id); s && spy.observe(s); });
+
+  // chapter cards (hero)
+  const ERA = { intro: "300,000 ya →", ch1: "65,000 ya", ch2: "7000 BCE", ch3: "2600–1900 BCE", ch4: "2000–1000 BCE", epi: "→ 100 CE" };
+  $("#chapterCards").innerHTML = CH.map(c => `<a href="#${c.id}" style="--accent:${chColor(c.id)}"><span class="n">${c.n}</span><span class="era">${ERA[c.id]}</span><b>${c.title}</b><small>${c.blurb}</small></a>`).join("");
+  $("#heroSearch").addEventListener("click", () => $("#searchBtn").click());
+  const toTop = $("#toTop");
+  toTop.addEventListener("click", () => scrollTo({ top: 0 }));
+  addEventListener("scroll", () => toTop.classList.toggle("on", scrollY > innerHeight * 1.2), { passive: true });
 
   // hero 3D tilt
   const cover = $(".cover3d");
@@ -264,11 +276,14 @@
       $$(".seg button", fig).forEach(x => x.setAttribute("aria-pressed", x === b));
       const isT = b.dataset.v === "table"; viz.hidden = isT; tv.hidden = !isT; if (!isT) draw();
     }));
-    new IntersectionObserver((es, o) => { if (es[0].isIntersecting) { draw(); o.disconnect(); } }, { rootMargin: "300px" }).observe(fig);
+    // draw up-front (29 small SVGs are cheap): lazy drawing changed card heights while
+    // the reader was jumping around, which made nav links land in the wrong place
+    draw();
   }
   $$("figure[data-chart]").forEach(hydrateCard);
-  let rz; const redrawAll = () => drawn.forEach((d, f) => { if (f.isConnected && !$(".viz", f).hidden && $(".viz", f).childElementCount) d(); });
-  new ResizeObserver(() => { clearTimeout(rz); rz = setTimeout(() => { redrawAll(); drawTimeline(); drawJourney(); }, 160); }).observe(document.body);
+  let rz, lastW = innerWidth; const redrawAll = () => drawn.forEach((d, f) => { if (f.isConnected && !$(".viz", f).hidden && $(".viz", f).childElementCount) d(); });
+  // only width changes affect layout of the charts; ignore height changes (details opening, images loading)
+  new ResizeObserver(() => { if (innerWidth === lastW) return; lastW = innerWidth; clearTimeout(rz); rz = setTimeout(() => { redrawAll(); drawTimeline(); }, 160); }).observe(document.body);
 
   /* =========================================================
      IMAGE STRIPS + GALLERY + LIGHTBOX
@@ -289,6 +304,10 @@
     $("#lbPill").textContent = `${im.kind} · ${c.short}`; $("#lbPill").style.background = `color-mix(in oklab, ${chColor(c.id)} 30%, var(--surface-3))`;
     $("#lbCount").textContent = `${lbIdx + 1} / ${lbList.length}`;
     $("#lbGo").onclick = () => { lb.close(); document.getElementById(c.id).scrollIntoView(); };
+    const site = (window.SITES || []).find(s => s.img === im.id);
+    $("#lbMap").hidden = !site; $("#lbMap").onclick = () => { lb.close(); showOnMap(site.id); };
+    // preload neighbours
+    [1, -1].forEach(d => { const n = lbList[(lbIdx + d + lbList.length) % lbList.length]; if (n) new Image().src = `assets/img/${n.f}`; });
   }
   function openLB(list, i) { lbList = list; lbIdx = i; paintLB(); if (!lb.open) lb.showModal(); }
   const step = d => vt(() => { lbIdx = (lbIdx + d + lbList.length) % lbList.length; paintLB(); });
@@ -341,6 +360,9 @@
     const H = top + Math.max(lanes.length, 4) * laneH + axisH;
     const svg = document.createElementNS(NS, "svg"); svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("width", W); svg.setAttribute("height", H); svg.setAttribute("class", "svgc"); svg.setAttribute("role", "group"); svg.setAttribute("aria-label", "Master timeline. Use Tab to move between events.");
     const mk = (t, a, c) => { const n = document.createElementNS(NS, t); for (const k in a) n.setAttribute(k, a[k]); if (c != null) n.textContent = c; return n; };
+    // era bands behind the events
+    const BANDS = [[71000, 57000, "MIS 4 · cold & dry", "var(--c-ch1)"], [11700, 0, "Holocene", "var(--c-ch2)"], [4600, 3900, "Mature Harappan", "var(--c-ch3)"], [4000, 3000, "Steppe waves", "var(--c-ch4)"], [4200, 1900, "Era of mixing", "var(--c-epi)"]];
+    BANDS.forEach(([a, b, l, c], i) => { if (a < m.min || b > m.max) return; const x1 = X(a), x2 = X(b); const bw = Math.abs(x2 - x1); if (bw < 8) return; svg.append(mk("rect", { x: Math.min(x1, x2), y: top - 18, width: bw, height: H - axisH - top + 22, fill: c, opacity: .07, rx: 6 })); if (bw > l.length * 5.6 + 10) svg.append(mk("text", { x: Math.min(x1, x2) + 6, y: H - axisH - 6 - (i % 2) * 12, class: "t-mut small", style: `fill:${c}` }, l)); });
     m.ticks.forEach(t => { const x = X(t); svg.append(mk("line", { x1: x, x2: x, y1: top - 8, y2: H - axisH + 4, class: "gl" }), mk("text", { x, y: H - 10, class: "t-mut", "text-anchor": "middle" }, tlMode === "deep" ? (t >= 1000 ? fmt(t) : t) + " ya" : t > 2000 ? (t - 2000) + " BCE" : t === 2000 ? "1 CE" : t === 0 ? "today" : (2000 - t) + " CE")); });
     if (tlMode !== "deep") svg.append(mk("line", { x1: X(2000), x2: X(2000), y1: top - 8, y2: H - axisH + 4, stroke: "var(--text-3)", "stroke-width": 1.5, opacity: .6 }), mk("text", { x: X(2000) + 4, y: top - 12, class: "t-mut" }, "BCE ◂ ▸ CE"));
     placed.forEach(({ e, xl, xr, l }, i) => {
@@ -360,7 +382,9 @@
   function selectEvent(i, scroll, quiet) {
     tlSel = i; const e = EV[i], c = CH.find(c => c.id === e.ch);
     tlDetail.style.setProperty("--accent", chColor(e.ch));
-    tlDetail.innerHTML = `<div class="when">${whenLabel(e.ya, e.end)}</div><div><h4>${e.t}</h4><p>${e.d}</p><p class="src">${c.n} · ${c.title} — book source: ${e.s}</p></div><div class="seg"><button id="tlPrev" aria-label="Previous event">←</button><button id="tlNext" aria-label="Next event">→</button></div>`;
+    const loc = EVENT_LOC[e.t];
+    tlDetail.innerHTML = `<div class="when">${whenLabel(e.ya, e.end)}</div><div><h4>${e.t}</h4><p>${e.d}</p><p class="src">${c.n} · ${c.title} — book source: ${e.s}</p>${loc ? `<button class="map-link" id="tlMap" type="button">◎ Show on the map</button>` : ""}</div><div class="seg"><button id="tlPrev" aria-label="Previous event">←</button><button id="tlNext" aria-label="Next event">→</button></div>`;
+    if (loc) $("#tlMap").onclick = () => loc.startsWith("story:") ? goStory(loc.slice(6), true) : showOnMap(loc, e.ya);
     const idx = sortedEV.indexOf(e);
     $("#tlPrev").onclick = () => selectEvent(EV.indexOf(sortedEV[Math.max(0, idx - 1)]), true);
     $("#tlNext").onclick = () => selectEvent(EV.indexOf(sortedEV[Math.min(sortedEV.length - 1, idx + 1)]), true);
@@ -368,69 +392,53 @@
     if (scroll || quiet) { const g = $(`.tl-ev[data-i="${i}"]`, tl); if (g) { const r = g.getBoundingClientRect(), s = tl.getBoundingClientRect(); tl.scrollTo({ left: tl.scrollLeft + r.left - s.left - s.width / 3, behavior: quiet ? "auto" : "smooth" }); } }
   }
   function drawTimeline_keep(left) { drawTimeline(); tl.scrollLeft = left; }
+  tl.addEventListener("keydown", k => {
+    if (k.key !== "ArrowRight" && k.key !== "ArrowLeft") return; k.preventDefault();
+    const vis = sortedEV.filter(e => tlOn.has(e.ch)), cur = vis.indexOf(EV[tlSel]), nx = vis[Math.max(0, Math.min(vis.length - 1, cur + (k.key === "ArrowRight" ? 1 : -1)))];
+    if (nx) { selectEvent(EV.indexOf(nx), true); $(`.tl-ev[data-i="${EV.indexOf(nx)}"]`, tl)?.focus({ preventScroll: true }); }
+  });
   // drag-to-scroll
   let drag = null;
   tl.addEventListener("pointerdown", e => { if (e.target.closest(".tl-ev")) return; drag = { x: e.clientX, l: tl.scrollLeft }; tl.setPointerCapture(e.pointerId); tl.style.cursor = "grabbing"; });
   tl.addEventListener("pointermove", e => { if (drag) tl.scrollLeft = drag.l - (e.clientX - drag.x); });
   tl.addEventListener("pointerup", () => { drag = null; tl.style.cursor = ""; });
+  tl.addEventListener("pointercancel", () => { drag = null; tl.style.cursor = ""; });
 
   /* =========================================================
      JOURNEY (schematic Out-of-Africa scrubber)
      ========================================================= */
-  const NODES = {
-    africa: { x: 130, y: 300, l: "East Africa", ya: 300000 }, levant: { x: 270, y: 190, l: "Levant", ya: 180000 },
-    arabia: { x: 285, y: 270, l: "Arabia / Yemen", ya: 88000 }, india: { x: 470, y: 270, l: "India", ya: 65000 },
-    seasia: { x: 600, y: 310, l: "South-east Asia", ya: 65000 }, australia: { x: 690, y: 390, l: "Australia", ya: 65000 },
-    eastasia: { x: 640, y: 190, l: "East Asia", ya: 60000 }, central: { x: 470, y: 150, l: "Central Asia", ya: 50000 },
-    europe: { x: 340, y: 90, l: "Europe", ya: 45000 }, americas: { x: 740, y: 70, l: "Americas", ya: 16000 }
-  };
-  const EDGES = [
-    ["africa", "levant", 180000, "dead"], ["africa", "arabia", 88000, "dead"], ["africa", "arabia", 70000, "main", "Bab el Mandeb"],
-    ["arabia", "india", 65000, "main"], ["india", "seasia", 65000, "main"], ["seasia", "australia", 65000, "main"],
-    ["india", "eastasia", 60000, "main"], ["india", "central", 50000, "main"], ["central", "europe", 45000, "main"], ["eastasia", "americas", 16000, "main"]
-  ];
   const STEPS = [
-    [300000, "Homo sapiens emerge in Africa", "The oldest modern-human remains (Jebel Irhoud, Morocco) are ~300,000 years old. Modern humanity is a slow, multi-region story."],
-    [180000, "First forays into the Levant", "A fossil at Misliya, Israel (~180,000 years) is the earliest modern human outside Africa — but these early groups left no detectable lineage today."],
-    [88000, "Arabia’s green window", "A finger fossil at Al Wusta shows modern humans in a then-lake-rich Arabia ~88,000 years ago. Another dead end in the genetic record."],
-    [70000, "The successful exodus", "Geneticists date the OoA that gave rise to all non-Africans to ~70,000 years ago, likely by the Southern Route across Bab el Mandeb."],
-    [65000, "India — and Australia", "Migrants reach India about 65,000 years ago and quickly stream on to south-east Asia and Australia, meeting archaic humans on the way."],
-    [60000, "East Asia", "Descendants spread across the subcontinent into south-east Asia and east Asia."],
-    [45000, "Central Asia and Europe", "Between 60,000 and 40,000 years ago descendants populate central Asia and Europe; Europe is settled some 25,000 years after Australia."],
-    [16000, "The Americas", "Modern humans cross Beringia into the Americas around 16,000 years ago, the last major continent to be settled."]
+    [300000, "Homo sapiens emerge in Africa", "The oldest modern-human remains (Jebel Irhoud, Morocco) are ~300,000 years old. Modern humanity is a slow, multi-region story.", [-20, 5, 62, 42], [], ["jebel-irhoud"]],
+    [180000, "First forays into the Levant", "A fossil at Misliya, Israel (~180,000 years) is the earliest modern human outside Africa — but these early groups left no detectable lineage today.", [-5, 0, 62, 42], ["foray-levant"], ["misliya", "skhul"]],
+    [88000, "Arabia’s green window", "A finger fossil at Al Wusta shows modern humans in a then-lake-rich Arabia ~88,000 years ago. Another dead end in the genetic record.", [10, 0, 70, 40], ["foray-levant", "foray-arabia"], ["al-wusta", "misliya"]],
+    [70000, "The successful exodus", "Geneticists date the OoA that gave rise to all non-Africans to ~70,000 years ago, likely by the Southern Route across Bab el Mandeb.", [22, -2, 82, 34], ["ooa-exit"], ["bab"]],
+    [65000, "India — and Australia", "Migrants reach India about 65,000 years ago and quickly stream on to south-east Asia and Australia, meeting archaic humans on the way.", [32, -32, 150, 36], ["ooa-exit", "ooa-india", "ooa-interior", "ooa-sea", "ooa-aus"], ["jwalapuram", "lida-ajer", "australia"]],
+    [60000, "East Asia", "Descendants spread across the subcontinent into south-east Asia and east Asia.", [40, -32, 150, 50], ["ooa-exit", "ooa-india", "ooa-interior", "ooa-sea", "ooa-aus", "ooa-east"], []],
+    [45000, "Central Asia and Europe", "Between 60,000 and 40,000 years ago descendants populate central Asia and Europe; Europe is settled some 25,000 years after Australia.", [-15, -32, 152, 62], ["ooa-exit", "ooa-india", "ooa-interior", "ooa-sea", "ooa-aus", "ooa-east", "ooa-central", "ooa-europe"], []],
+    [16000, "The Americas", "Modern humans cross Beringia into the Americas around 16,000 years ago, the last major continent to be settled.", [-15, -36, 170, 68], ["ooa-exit", "ooa-india", "ooa-interior", "ooa-sea", "ooa-aus", "ooa-east", "ooa-central", "ooa-europe", "ooa-americas"], []]
   ];
-  let jStep = 4, jTimer = null;
+  let jStep = 4, jTimer = null, jMap = null;
   const jHost = $("#jmap");
+  const OOA = window.ROUTES.filter(r => r.kind === "ooa" || r.kind === "dead");
   function drawJourney() {
-    if (!jHost) return; const NS = "http://www.w3.org/2000/svg", ya = STEPS[jStep][0];
-    const mk = (t, a, c) => { const n = document.createElementNS(NS, t); for (const k in a) n.setAttribute(k, a[k]); if (c != null) n.textContent = c; return n; };
-    const s = mk("svg", { viewBox: "0 0 800 450", class: "svgc", role: "img", "aria-label": "Schematic map of the Out of Africa migration, not to scale" });
-    const defs = mk("defs", {}); defs.append(mk("pattern", { id: "dots", width: 22, height: 22, patternUnits: "userSpaceOnUse" })); defs.firstChild.append(mk("circle", { cx: 2, cy: 2, r: 1.2, fill: "var(--line)" })); s.append(defs, mk("rect", { width: 800, height: 450, fill: "url(#dots)" }));
-    EDGES.forEach(([a, b, eya, kind], i) => {
-      const A = NODES[a], B = NODES[b], on = eya >= ya, mx = (A.x + B.x) / 2, my = (A.y + B.y) / 2 - 38 + (kind === "dead" && b === "arabia" ? 70 : 0);
-      const p = mk("path", { d: `M${A.x},${A.y} Q${mx},${my} ${B.x},${B.y}`, fill: "none", stroke: kind === "main" ? "var(--s1)" : "var(--gray)", "stroke-width": kind === "main" ? 4 : 2.5, "stroke-dasharray": kind === "main" ? "" : "6 6", "stroke-linecap": "round", opacity: on ? 1 : .08 });
-      if (on && kind === "main" && eya === ya && !matchMedia("(prefers-reduced-motion: reduce)").matches) { p.setAttribute("stroke-dasharray", "1000"); p.setAttribute("stroke-dashoffset", "1000"); p.animate([{ strokeDashoffset: 1000 }, { strokeDashoffset: 0 }], { duration: 1100, fill: "forwards", easing: "cubic-bezier(.2,.8,.2,1)" }); }
-      s.append(p);
-    });
-    Object.values(NODES).forEach(n => {
-      const on = n.ya >= ya, cur = STEPS[jStep][0] === n.ya || (jStep === 4 && ["india", "seasia", "australia"].includes(Object.keys(NODES).find(k => NODES[k] === n)));
-      const g = mk("g", { opacity: on ? 1 : .2 });
-      if (cur && on) g.append(mk("circle", { cx: n.x, cy: n.y, r: 18, fill: "var(--s1)", opacity: .2 }));
-      g.append(mk("circle", { cx: n.x, cy: n.y, r: 8, fill: on ? "var(--s1)" : "var(--gray)", class: "ring" }), mk("text", { x: n.x, y: n.y + 24, "text-anchor": "middle", class: "t-pri t-b" }, n.l), mk("text", { x: n.x, y: n.y + 38, "text-anchor": "middle", class: "t-mut small" }, on ? "≈" + fmt(n.ya) + " ya" : ""));
-      s.append(g);
-    });
-    s.append(mk("text", { x: 790, y: 440, "text-anchor": "end", class: "t-mut small" }, "Schematic — not to scale. Dashed grey: early forays with no surviving lineage."));
-    jHost.replaceChildren(s);
-    $("#jYa").textContent = fmt(ya); $("#jT").textContent = STEPS[jStep][1]; $("#jD").textContent = STEPS[jStep][2];
+    if (!jHost) return;
+    const [ya, title, text, view, routes, sites] = STEPS[jStep];
+    if (!jMap) jMap = AtlasMap.create(jHost, { view, routes: OOA, label: "Map of the Out of Africa migration", layers: { borders: false, rivers: false }, onSite: s => s && openSite(s, true) });
+    jMap.setState({ t: ya, routes, sites }); jMap.fly(view, 1100);
+    $("#jYa").textContent = fmt(ya); $("#jT").textContent = title; $("#jD").textContent = text;
     $("#jRange").value = jStep; $$("#jSteps button").forEach((b, i) => b.setAttribute("aria-pressed", i === jStep));
   }
   if (jHost) {
     $("#jRange").max = STEPS.length - 1;
-    $("#jSteps").innerHTML = STEPS.map((s, i) => `<button data-i="${i}" aria-pressed="false">${s[0] >= 1000 ? Math.round(s[0] / 1000) + "k" : s[0]}</button>`).join("");
+    $("#jSteps").innerHTML = STEPS.map((s, i) => `<button type="button" data-i="${i}" aria-pressed="false">${s[0] >= 1000 ? Math.round(s[0] / 1000) + "k" : s[0]}</button>`).join("");
     $("#jSteps").addEventListener("click", e => { const b = e.target.closest("button"); if (b) { stopJ(); jStep = +b.dataset.i; drawJourney(); } });
     $("#jRange").addEventListener("input", e => { stopJ(); jStep = +e.target.value; drawJourney(); });
     const stopJ = () => { clearInterval(jTimer); jTimer = null; $("#jPlay").textContent = "▶ Play"; };
-    $("#jPlay").addEventListener("click", () => { if (jTimer) return stopJ(); $("#jPlay").textContent = "❚❚ Pause"; if (jStep >= STEPS.length - 1) jStep = -1; jTimer = setInterval(() => { jStep++; if (jStep >= STEPS.length - 1) stopJ(); drawJourney(); }, 2400); });
+    $("#jPlay").addEventListener("click", () => { if (jTimer) return stopJ(); $("#jPlay").textContent = "❚❚ Pause"; if (jStep >= STEPS.length - 1) jStep = -1; const adv = () => { jStep++; drawJourney(); if (jStep >= STEPS.length - 1) stopJ(); }; adv(); jTimer = setInterval(adv, 3200); });
+    // fill the text now (stable layout); build the map lazily when it nears the viewport
+    $("#jYa").textContent = fmt(STEPS[jStep][0]); $("#jT").textContent = STEPS[jStep][1]; $("#jD").textContent = STEPS[jStep][2];
+    $$("#jSteps button").forEach((b, i) => b.setAttribute("aria-pressed", i === jStep)); $("#jRange").value = jStep;
+    new IntersectionObserver((es, ob) => { if (es[0].isIntersecting) { ob.disconnect(); drawJourney(); } }, { rootMargin: "400px" }).observe(jHost);
   }
 
   /* =========================================================
@@ -478,6 +486,124 @@
   $("#research-tl").innerHTML = window.RESEARCH.map(r => `<div class="it reveal"><b class="y">${Math.floor(r.y)}</b><h4>${r.t}</h4><p>${r.d}</p></div>`).join("");
 
   /* =========================================================
+     HISTORY ATLAS (geographic, story-driven)
+     ========================================================= */
+  const ST = window.STORIES, SITES = window.SITES, RK = window.ROUTE_KINDS;
+  const T_MAX = 300000, T_MIN = 1500;
+  const u2ya = u => Math.exp(Math.log(T_MAX) + (Math.log(T_MIN) - Math.log(T_MAX)) * (u / 1000));
+  const ya2u = ya => Math.round(1000 * (Math.log(T_MAX) - Math.log(Math.min(T_MAX, Math.max(T_MIN, ya)))) / (Math.log(T_MAX) - Math.log(T_MIN)));
+  const eraOf = ya => ya > 130000 ? "Middle Palaeolithic" : ya > 45000 ? "Out of Africa" : ya > 11700 ? "Late Pleistocene" : ya > 7500 ? "Early Holocene: first farmers" : ya > 4600 ? "Early Harappan" : ya > 3900 ? "Mature Harappan" : ya > 3000 ? "Late Harappan & Steppe waves" : ya > 2100 ? "Second urbanization" : "Mauryas → endogamy";
+  const EVENT_LOC = {
+    "Earliest Homo sapiens remains": "jebel-irhoud", "Hathnora cranium, Narmada valley": "hathnora", "Early tools at Attirampakkam (Middle Palaeolithic)": "attirampakkam",
+    "Misliya, Israel": "misliya", "Skhul–Qafzeh humans, Israel": "skhul", "Al Wusta, Arabia": "al-wusta", "Jwalapuram tools under Toba ash": "jwalapuram",
+    "Toba supervolcano erupts": "toba", "Successful Out of Africa": "story:ooa", "OoA migrants reach India and Australia": "story:ooa",
+    "Microlithic technology; First Indians multiply": "central-india", "Modern humans reach Europe": "story:world", "Modern humans reach the Americas": "story:world",
+    "Archaic Homo likely vanish in India": "story:first", "Wild wheat and rye harvested on the Euphrates": "euphrates", "Domesticated emmer and einkorn": "anatolia",
+    "Mehrgarh founded; rice at Lahuradewa": "mehrgarh", "Zagros farmers mix with First Indians": "story:zagros", "Pottery arrives at Mehrgarh": "mehrgarh",
+    "Early Harappan era": "rakhigarhi", "First script-like marks at Harappa": "harappa", "Yamnaya burst upon Europe": "story:yamnaya", "Mature Harappan period": "story:harappa",
+    "BMAC": "bmac", "Steppe pastoralists move south": "story:steppe", "Waves of Steppe migrants enter South Asia": "story:steppe", "Austroasiatic wave from China/SE Asia": "story:toppings",
+    "Late Harappan: decline": "dholavira", "Swat valley samples": "swat", "Rigveda composed (one scholarly dating)": "punjab-vedic", "Ganga-plain urbanization begins": "magadha",
+    "The Mauryan empire": "magadha", "Era of extensive mixing": "story:magadha", "Endogamy sets in: the caste ‘closing’": "story:magadha", "Farming spreads across India": "lahuradewa"
+  };
+  let aMap = null, aStory = 0, aFree = false, aTimer = null;
+  const aHost = $("#atlasMap"), aRange = $("#atlasRange"), storyCard = $("#storyCard"), siteCard = $("#siteCard");
+  const LAYERS = [["routes", "Routes"], ["sites", "Places"], ["rivers", "Rivers"], ["extents", "Harappan extent"], ["borders", "Modern borders"], ["labels", "Labels"]];
+
+  function ensureAtlas() {
+    if (aMap) return aMap;
+    aMap = AtlasMap.create(aHost, { view: ST[0].view, label: "History atlas of the Indian subcontinent and its migrations", onSite: s => s ? openSite(s) : closeSite() });
+    return aMap;
+  }
+  const roundYa = ya => ya > 12000 ? Math.round(ya / 1000) * 1000 : ya > 4000 ? Math.round(ya / 100) * 100 : Math.round(ya / 50) * 50;
+  function paintBadge(ya) { $("#atlasYa").textContent = whenLabel(roundYa(ya)); $("#atlasEra").textContent = eraOf(ya); }
+  function goStory(i, scroll) {
+    if (typeof i === "string") i = ST.findIndex(s => s.id === i);
+    if (i < 0) return;
+    aStory = i; aFree = false; const st = ST[i], m = ensureAtlas();
+    m.setState({ t: st.t, routes: st.routes, sites: st.sites, selected: null }); m.fly(st.view, 1300);
+    aRange.value = ya2u(st.t); paintBadge(st.t); paintStory(); closeSite();
+    if (scroll) $("#atlas").scrollIntoView();
+  }
+  function routeChips(ids) { const kinds = [...new Set(ids.map(id => window.ROUTES.find(r => r.id === id)?.kind).filter(Boolean))]; return kinds.map(k => `<span class="rk" style="--rc:${RK[k].slot ? `var(--s${RK[k].slot})` : "var(--gray)"}"><i></i>${RK[k].n}</span>`).join(""); }
+  function paintStory() {
+    $$("#storySteps button").forEach((b, j) => { const on = !aFree && j === aStory; b.setAttribute("aria-selected", on); if (on) { const box = b.parentElement; if (box.scrollWidth > box.clientWidth) box.scrollTo({ left: b.offsetLeft - box.clientWidth / 2 + b.offsetWidth / 2, behavior: "smooth" }); } });
+    if (aFree) {
+      const ya = u2ya(+aRange.value), near = sortedEV.filter(e => Math.abs(e.ya - ya) / ya < .35 || (e.end != null && e.ya >= ya && e.end <= ya)).slice(0, 4);
+      const nearest = ST.reduce((b, s, j) => Math.abs(Math.log(s.t / ya)) < Math.abs(Math.log(ST[b].t / ya)) ? j : b, 0);
+      storyCard.style.setProperty("--accent", "var(--text-3)");
+      storyCard.innerHTML = `<span class="kicker">Free exploration</span><h3>${eraOf(ya)}</h3><p>Places and routes active around <b>${whenLabel(roundYa(ya))}</b> are highlighted; earlier ones fade.</p>
+        ${near.length ? `<h5>Around this time</h5><ul class="near">${near.map(e => `<li><button type="button" data-ev="${EV.indexOf(e)}"><b>${whenLabel(e.ya, e.end)}</b>${e.t}</button></li>`).join("")}</ul>` : ""}
+        <div class="story-nav"><button class="btn sm" type="button" data-go="${nearest}">Resume tour at “${ST[nearest].title}” →</button></div>`;
+      return;
+    }
+    const st = ST[aStory];
+    storyCard.style.setProperty("--accent", chColor(st.ch));
+    storyCard.innerHTML = `<span class="kicker">Stop ${aStory + 1} of ${ST.length} · ${st.kicker}</span><h3>${st.title}</h3><p>${st.text}</p>
+      ${st.routes.length ? `<div class="rks">${routeChips(st.routes)}</div>` : ""}
+      ${st.sites.length ? `<h5>Places</h5><div class="place-chips">${st.sites.map(id => { const s = SITES.find(x => x.id === id); return s ? `<button type="button" data-site="${id}" style="--sc:${chColor(s.ch)}"><i></i>${s.n}</button>` : ""; }).join("")}</div>` : ""}
+      <div class="story-nav"><button class="btn sm" type="button" data-step="-1" ${aStory ? "" : "disabled"} aria-label="Previous stop">←</button><button class="btn sm primary" type="button" data-step="1" ${aStory < ST.length - 1 ? "" : "disabled"}>Next stop →</button><a class="btn sm ghost" href="#${st.ch}">Read chapter ↗</a></div>`;
+  }
+  function openSite(s, fromJourney) {
+    if (fromJourney) { showOnMap(s.id); return; }
+    const im = s.img && imgById[s.img];
+    siteCard.style.setProperty("--accent", chColor(s.ch)); siteCard.hidden = false;
+    siteCard.innerHTML = `${im ? `<button class="sc-img" type="button" aria-label="Enlarge picture: ${im.title}"><img src="assets/img/${im.f}" alt="${im.title}" loading="lazy"></button>` : ""}
+      <div class="sc-body"><span class="kicker">${s.where} · ${AtlasMap.whenRange(s.from, s.to)}</span><h4>${s.n}</h4><p>${s.d}</p>
+      <div class="story-nav"><button class="btn sm" type="button" data-zoom="${s.id}">Zoom here</button><a class="btn sm ghost" href="#${s.ch}">${CH.find(c => c.id === s.ch).short} ↗</a><button class="icon-btn sm" type="button" data-close aria-label="Close place details">✕</button></div></div>`;
+    if (im) $(".sc-img", siteCard).onclick = () => openLB([im], 0);
+  }
+  function closeSite() { siteCard.hidden = true; aMap && aMap.state.selected && aMap.select(null); }
+  function showOnMap(siteId, ya) {
+    const s = SITES.find(x => x.id === siteId); if (!s) return;
+    const m = ensureAtlas(); stopTour();
+    $("#atlas").scrollIntoView();
+    const t = ya != null ? ya : (s.from + s.to) / 2;
+    aFree = true; m.setState({ t, routes: null, sites: null }); aRange.value = ya2u(t); paintBadge(t); paintStory();
+    setTimeout(() => { m.focusSite(siteId); openSite(s); }, 350);
+  }
+  function stopTour() { clearInterval(aTimer); aTimer = null; $("#atlasPlay").textContent = "▶"; $("#atlasPlay").setAttribute("aria-label", "Play the guided tour"); }
+  if (aHost) {
+    $("#storySteps").innerHTML = ST.map((st, i) => `<button type="button" role="tab" data-i="${i}" aria-selected="false" style="--accent:${chColor(st.ch)}"><span>${String(i + 1).padStart(2, "0")}</span>${st.title}</button>`).join("");
+    $("#storySteps").addEventListener("click", e => { const b = e.target.closest("button"); if (b) { stopTour(); goStory(+b.dataset.i); } });
+    storyCard.addEventListener("click", e => {
+      const b = e.target.closest("button"); if (!b) return;
+      if (b.dataset.step) { stopTour(); goStory(Math.max(0, Math.min(ST.length - 1, aStory + +b.dataset.step))); }
+      else if (b.dataset.go) goStory(+b.dataset.go);
+      else if (b.dataset.site) { const s = SITES.find(x => x.id === b.dataset.site); aMap.focusSite(s.id); openSite(s); }
+      else if (b.dataset.ev) { const i = +b.dataset.ev; $("#timeline").scrollIntoView(); setTimeout(() => selectEvent(i, true), 350); }
+    });
+    siteCard.addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; if (b.dataset.zoom) aMap.focusSite(b.dataset.zoom, 6); if (b.hasAttribute("data-close")) closeSite(); });
+    aRange.addEventListener("input", () => { stopTour(); const ya = u2ya(+aRange.value); aFree = true; ensureAtlas().setState({ t: ya, routes: null, sites: null }); paintBadge(ya); paintStory(); });
+    // ticks + chapter bands on the time track
+    const TICKS = [300000, 100000, 65000, 30000, 10000, 5000, 3000, 2000];
+    $("#timeTicks").innerHTML = TICKS.map(t => `<span style="left:${ya2u(t) / 10}%">${t >= 12000 ? Math.round(t / 1000) + "k ya" : t > 2000 ? (t - 2000) + " BCE" : "0"}</span>`).join("");
+    const BANDS = [["intro", 300000, 72000], ["ch1", 72000, 12000], ["ch2", 12000, 4600], ["ch3", 4600, 3900], ["ch4", 3900, 3000], ["epi", 3000, T_MIN]];
+    $("#timeBands").innerHTML = BANDS.map(([c, a, b]) => `<i title="${CH.find(x => x.id === c).short}" style="left:${ya2u(a) / 10}%;width:${(ya2u(b) - ya2u(a)) / 10}%;background:${chColor(c)}"></i>`).join("");
+    $("#atlasPlay").addEventListener("click", () => {
+      if (aTimer) return stopTour();
+      $("#atlasPlay").textContent = "❚❚"; $("#atlasPlay").setAttribute("aria-label", "Pause the guided tour");
+      goStory(aFree || aStory >= ST.length - 1 ? 0 : aStory + 1);
+      aTimer = setInterval(() => { if (aStory >= ST.length - 1) return stopTour(); goStory(aStory + 1); }, 7000);
+    });
+    // layers + legend
+    $("#atlasLayers").innerHTML = LAYERS.map(([k, l]) => `<button class="chip" type="button" aria-pressed="true" data-layer="${k}"><i></i>${l}</button>`).join("");
+    $("#atlasLayers").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; const on = b.getAttribute("aria-pressed") !== "true"; b.setAttribute("aria-pressed", on); ensureAtlas().setLayer(b.dataset.layer, on); });
+    $("#atlasLegend").innerHTML = Object.entries(RK).map(([k, v]) => `<li><i class="${v.dash ? "dash" : ""}" style="background:${v.slot ? `var(--s${v.slot})` : "var(--gray)"}"></i><span>${v.n}</span></li>`).join("");
+    // paint the panel now (stable layout), build the map lazily when it nears the viewport
+    aRange.value = ya2u(ST[0].t); paintBadge(ST[0].t); paintStory();
+    new IntersectionObserver((es, ob) => { if (es[0].isIntersecting) { ob.disconnect(); if (!aMap) goStory(aStory); } }, { rootMargin: "300px" }).observe(aHost);
+    // links from chapters
+    document.addEventListener("click", e => { const a = e.target.closest("[data-story]"); if (!a || a.closest("#storySteps")) return; e.preventDefault(); stopTour(); goStory(a.dataset.story, true); });
+  }
+
+  /* decorative hero map */
+  const hm = $("#heroMap");
+  if (hm && !matchMedia("(max-width: 640px)").matches) {
+    const hMap = AtlasMap.create(hm, { interactive: false, decorative: true, view: [-5, -38, 150, 62], routes: window.ROUTES.filter(r => r.kind !== "dead") });
+    hMap.setState({ t: 0, routes: window.ROUTES.map(r => r.id) });
+  }
+
+  /* =========================================================
      COMMAND PALETTE
      ========================================================= */
   const pal = $("#palette"), pIn = $("#pIn"), pList = $("#pList"); let pItems = [], pSel = 0;
@@ -486,12 +612,14 @@
     ...EV.map((e, i) => ({ k: "Event", t: e.t, s: whenLabel(e.ya, e.end), go: () => { tlOn.add(e.ch); $$("#tlChips button").forEach(b => b.setAttribute("aria-pressed", tlOn.has(b.dataset.ch))); tlMode = e.ya > 15000 ? "deep" : e.ya > 8000 ? "holo" : "bronze"; $$("#tlModes button").forEach(x => x.setAttribute("aria-pressed", x.dataset.m === tlMode)); drawTimeline(); $("#timeline").scrollIntoView(); setTimeout(() => selectEvent(i, true), 350); } })),
     ...window.FACTS.map(f => ({ k: "Fact", t: f[0], s: f[1], go: () => document.getElementById(f[2]).scrollIntoView() })),
     ...IMG.map(im => ({ k: "Image", t: im.title, s: im.kind, extra: im.tags.join(" ") + " " + im.cap, go: () => openLB(IMG, IMG.indexOf(im)) })),
-    ...Object.entries(CHARTS).map(([k, c]) => ({ k: "Chart", t: c.title, s: c.sub, go: () => document.getElementById("c-" + k).scrollIntoView({ block: "center" }) }))
+    ...Object.entries(CHARTS).map(([k, c]) => ({ k: "Chart", t: c.title, s: c.sub, go: () => document.getElementById("c-" + k).scrollIntoView({ block: "center" }) })),
+    ...ST.map((st, i) => ({ k: "Map", t: st.title, s: st.kicker + " — " + st.text, go: () => goStory(i, true) })),
+    ...SITES.map(si => ({ k: "Place", t: si.n, s: si.where + " · " + si.d, go: () => showOnMap(si.id) }))
   ];
   function paintPal() {
     const q = pIn.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
     pItems = corpus.filter(c => q.every(w => (c.t + " " + c.s + " " + (c.extra || "")).toLowerCase().includes(w))).slice(0, 40); pSel = 0;
-    pList.innerHTML = pItems.map((c, i) => `<li><button data-i="${i}" aria-selected="${i === 0}"><small>${c.k}</small><span><b>${c.t}</b> — ${c.s.length > 90 ? c.s.slice(0, 88) + "…" : c.s}</span></button></li>`).join("") || `<li style="padding:1rem;color:var(--text-3)">No results</li>`;
+    pList.innerHTML = pItems.map((c, i) => `<li role="option" aria-selected="${i === 0}"><button type="button" tabindex="-1" data-i="${i}" aria-selected="${i === 0}"><small>${c.k}</small><span><b>${c.t}</b> — ${c.s.length > 90 ? c.s.slice(0, 88) + "…" : c.s}</span></button></li>`).join("") || `<li class="empty">No results for “${pIn.value.replace(/[<>&]/g, "")}”</li>`;
   }
   const openPal = () => { pIn.value = ""; paintPal(); pal.showModal(); pIn.focus(); };
   const run = i => { const it = pItems[i]; if (!it) return; pal.close(); setTimeout(it.go, 60); };
@@ -499,12 +627,12 @@
   addEventListener("keydown", e => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); pal.open ? pal.close() : openPal(); } if (e.key === "/" && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && !pal.open) { e.preventDefault(); openPal(); } });
   pIn.addEventListener("input", paintPal);
   pIn.addEventListener("keydown", e => {
-    const mv = d => { pSel = (pSel + d + pItems.length) % Math.max(1, pItems.length); $$("#pList button").forEach((b, i) => b.setAttribute("aria-selected", i === pSel)); $$("#pList button")[pSel]?.scrollIntoView({ block: "nearest" }); };
-    if (e.key === "ArrowDown") { e.preventDefault(); mv(1); } else if (e.key === "ArrowUp") { e.preventDefault(); mv(-1); } else if (e.key === "Enter") { e.preventDefault(); run(pSel); }
+    const mv = d => { pSel = (pSel + d + pItems.length) % Math.max(1, pItems.length); $$("#pList button").forEach((b, i) => { b.setAttribute("aria-selected", i === pSel); b.parentElement.setAttribute("aria-selected", i === pSel); }); $$("#pList button")[pSel]?.scrollIntoView({ block: "nearest" }); };
+    if (e.key === "ArrowDown") { e.preventDefault(); mv(1); } else if (e.key === "ArrowUp") { e.preventDefault(); mv(-1); } else if (e.key === "Enter") { e.preventDefault(); run(pSel); } else if (e.key === "Escape") { e.preventDefault(); pal.close(); }
   });
   pList.addEventListener("click", e => { const b = e.target.closest("button"); if (b) run(+b.dataset.i); });
   pal.addEventListener("click", e => { if (e.target === pal) pal.close(); });
 
   /* ---------- boot ---------- */
-  drawTimeline(); drawJourney();
+  drawTimeline();
 })();
