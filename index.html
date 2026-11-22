@@ -24,10 +24,18 @@
     <nav class="chapnav" aria-label="Sections"></nav>
     <div class="bar-actions">
       <button class="icon-btn" id="searchBtn" aria-label="Search (press / or Ctrl+K)" title="Search · / or Ctrl+K"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="m16 16 4.5 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+      <button class="icon-btn" id="bookmarkBtn" aria-label="Bookmarks (Ctrl+B)" title="Bookmarks"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect x="3" y="3" width="16" height="16" rx="4" fill="currentColor" opacity=".4"/><rect x="7" y="8" width="16" height="16" rx="4" fill="currentColor"/></svg></button>
       <button class="icon-btn" id="themeBtn" aria-label="Switch to dark theme" title="Toggle theme"><span aria-hidden="true">◐</span></button>
     </div>
   </div>
 </header>
+
+<dialog id="bookmarks" aria-label="Bookmarks">
+  <div class="box">
+    <div class="bm-list" id="bmList"></div>
+    <div class="bm-foot"><button class="btn sm primary" type="button" id="bmSave">Save current view</button></div>
+  </div>
+</dialog>
 
 <main id="main">
 <!-- ===================== HERO ===================== -->
@@ -68,6 +76,14 @@
     </div>
     <div class="tl-scroll" id="tl" tabindex="-1"></div>
     <div class="tl-detail" id="tlDetail" aria-live="polite"></div>
+  </div>
+</section>
+
+<!-- ===================== CHAPTER TRACK ===================== -->
+<section class="block" id="chapterTrack" style="--accent: var(--c-ch1)">
+  <div class="wrap">
+    <div class="subhead" style="margin-top:0"><h3>The book’s five chapters, one after another</h3><span>click a chapter to jump</span></div>
+    <div class="ct-track" id="ctTrack" role="group" aria-label="Chapters of the book"></div>
   </div>
 </section>
 
@@ -348,6 +364,18 @@
   </div>
 </section>
 
+<!-- ===================== QUIZZES ===================== -->
+<section class="block quiz" id="quiz" style="--accent: var(--c-epi)">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Know the book</span>
+      <h2>Quizzes</h2>
+      <p>Six quiz modules generated from the book’s own data — chronology, events in order, where it happened, the atlas tour, book facts and which chapter covers what. Your best score is remembered.</p>
+    </div>
+    <div class="quiz-modules" id="quizModules" role="group" aria-label="Quiz modules"></div>
+  </div>
+</section>
+
 <!-- ===================== RESEARCH ===================== -->
 <section class="block" id="research" style="--accent:var(--c-ch1)">
   <div class="wrap">
@@ -405,6 +433,7 @@
 <script src="js/atlas-data.js"></script>
 <script src="js/charts.js"></script>
 <script src="js/map.js"></script>
+<script src="js/quiz.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
