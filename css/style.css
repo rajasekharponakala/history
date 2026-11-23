@@ -5,7 +5,7 @@
    :has(), scroll-driven animations, View Transitions, <dialog>,
    interpolate-size, text-wrap, subgrid-friendly grids.
    ========================================================= */
-@layer reset, tokens, base, layout, components, charts, motion, print;
+@layer reset, tokens, base, layout, components, quiz, charts, motion, print;
 
 @layer reset {
   *, *::before, *::after { box-sizing: border-box; }
@@ -383,6 +383,50 @@
   .compare .col { padding: 1.1rem 1.2rem; border-radius: var(--radius); border: 1px solid var(--line); background: var(--surface-2);
     h4 { display: flex; gap: .6rem; align-items: center; margin-bottom: .6rem; } h4 i { width: 12px; height: 12px; border-radius: 4px; }
     ul { padding-left: 1.1rem; color: var(--text-2); font-size: .92rem; display: grid; gap: .35rem; } }
+}
+
+@layer quiz {
+  /* ---------- chapter track ---------- */
+  .ct-track { display: flex; flex-wrap: wrap; gap: .55rem; overflow-x: auto; padding: .1rem 0 .5rem; scrollbar-width: thin; }
+  .ct-chip { display: flex; flex-direction: column; gap: .1rem; padding: .5rem .8rem; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--line); color: var(--text-2); font-size: .84rem; transition: all .2s; cursor: pointer; text-align: left; align-items: flex-start;
+    .n { font: 700 1.45rem var(--font-serif); color: var(--accent); font-variant-numeric: lining-nums; letter-spacing: -.02em; }
+    b { font-size: .84rem; font-weight: 650; }
+    .tag { color: var(--text-3); font-size: .68rem; letter-spacing: .05em; text-transform: uppercase; }
+    .when { color: var(--text-3); font-size: .66rem; font-variant-numeric: tabular-nums; }
+    &:hover { color: var(--text); border-color: color-mix(in oklab, var(--accent) 60%, var(--line)); box-shadow: var(--shadow); translate: 0 -2px; }
+    &[aria-current="true"] { background: var(--surface-1); color: var(--text); border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset, var(--shadow); } }
+
+  /* ---------- quizzes ---------- */
+  .quiz-modules { display: grid; gap: 1.2rem; }
+  .q-card { display: flex; flex-direction: column; gap: .8rem; }
+  .q-head { display: flex; align-items: baseline; gap: .7rem; flex-wrap: wrap; }
+  .q-title { font: 700 1.35rem var(--font-serif); }
+  .q-tag { color: var(--text-3); font-size: .86rem; }
+  .q-panel { display: flex; flex-direction: column; gap: .5rem; }
+  .q-q { font-weight: 600; margin: 0; max-width: 60ch; color: var(--text); }
+  .q-opts { display: grid; gap: .45rem; }
+  .q-rank { align-items: flex-start; }
+  .q-opt { width: 100%; text-align: left; padding: .55rem .9rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); color: var(--text-2); font-size: .94rem; font-weight: 550; cursor: pointer; transition: background .2s, border-color .2s, color .2s;
+    &:hover { color: var(--text); border-color: color-mix(in oklab, var(--accent) 55%, var(--line)); }
+    &[aria-pressed="true"].on { background: color-mix(in oklab, var(--accent) 18%, var(--surface-1)); border-color: var(--accent); color: var(--text); }
+    &.off { background: color-mix(in oklab, var(--s8) 15%, var(--surface-2)); border-color: var(--s8); }
+    &.dim { opacity: .45; } }
+  .q-rank-list { color: var(--text-2); font-size: .92rem; }
+  .q-feedback { margin: 0; font-weight: 650; }
+  .q-good { color: var(--s3); } .q-bad { color: var(--s8); }
+  .q-score { color: var(--text-3); font-size: .8rem; }
+  .q-note { color: var(--text-3); font-size: .8rem; margin-top: .5rem; }
+
+  /* ---------- bookmarks (dialog) ---------- */
+  #bookmarks { width: min(340px, 92vw); margin: 8vh auto auto;
+    .box { background: var(--surface-1); border: 1px solid var(--line); border-radius: 20px; overflow: hidden; box-shadow: 0 40px 100px -20px #000c; }
+    .bm-list { padding: .6rem; display: grid; gap: .35rem; max-height: 50dvh; overflow: auto; }
+    .bm-item { display: flex; gap: .35rem; align-items: center; }
+    .bm-jump, .bm-del { flex: 1; padding: .45rem .65rem; border-radius: 8px; font-size: .82rem; text-align: left; border: 1px solid var(--line); background: var(--surface-2); color: var(--text-2);
+      &:hover { color: var(--text); border-color: color-mix(in oklab, var(--accent) 55%, var(--line)); } }
+    .bm-del { flex: 0 0 auto; width: 38px; justify-content: center; }
+    .bm-empty { padding: .6rem .7rem; color: var(--text-3); font-size: .82rem; }
+    .bm-foot { padding: 0 .6rem .6rem; } }
 }
 
 @layer charts {

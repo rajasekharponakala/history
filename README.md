@@ -10,6 +10,9 @@ Plain HTML, CSS and JavaScript: no build step, no framework, and it works offlin
 - **History atlas**: a real geographic map (Natural Earth land and borders, bundled offline) with 12 guided stops, from the exodus across Bab el Mandeb to the Mauryas. It shows 45 places and 26 animated migration and trade routes, approximate river courses and the extent of the Mature Harappan civilization. A time slider covers 300,000 years ago to 500 CE, places open detail cards with pictures from the book, and you can pan, pinch or Ctrl/⌘ + scroll to zoom, or use the keyboard. Layers can be switched on and off.
 - **Out of Africa journey** (chapter 1): an 8-step scrubber drawn on the same map engine.
 - **Master timeline**: 38 events on three scales (400,000-year log, 15,000-year, 8,000-year), with chapter filters, era bands (MIS 4, Holocene, Mature Harappan, Steppe waves, era of mixing), drag to pan, ←/→ keyboard stepping and a **Show on the map** link.
+- **Chapter track**: the book’s five chapters, “00 Intro” through “05 Epilogue”, on one line — click a chapter to jump to it (arrowed by years ago; active chapter marked by scroll spy).
+- **URL deep links & bookmarks**: the timeline mode and filters, the atlas story stop or time, and the active chapter live in the URL (`?tl=…`, `?tlch=…`, `?story=…`, `?t=…`, `?ch=…`). Bookmark any view (Ctrl+B) and jump back to it later.
+- **Quizzes**: six quiz modules generated from the book’s own data — chronology (which event happened first), ordering the events oldest → newest, matching stories to places, identifying the atlas stops, true/false facts and which chapter covers an event. Your best score per module is remembered.
 - 29 charts (range bars, bars, lollipops, donuts, 100% stacked, waffles, time ranges, columns, a haplogroup tree), each with a Data table toggle.
 - Genetics primer, the "Indian pizza" explorer and a research timeline.
 - All 48 pictures from the book, grouped by chapter, with a filterable gallery, lightbox, slideshow and **Show on map** for photographed sites.
@@ -25,7 +28,8 @@ js/atlas-data.js    places, routes, rivers, Harappan extent, guided map stops
 js/geo.js           land + border outlines (Natural Earth 1:50m, public domain), delta-encoded
 js/charts.js        small SVG chart kit
 js/map.js           SVG map engine (Miller projection, pan/zoom, routes, labels)
-js/app.js           wiring: timeline, atlas, journey, gallery, search, pizza…
+js/quiz.js          quiz engine — six data-driven quiz modules, best scores in localStorage
+js/app.js           wiring: timeline, chapter track, atlas, journey, gallery, search, quizzes…
 assets/img/         pictures extracted from the book
 ```
 - To change a number, edit `js/data.js`.

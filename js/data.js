@@ -12,25 +12,32 @@ window.BOOK = {
 };
 
 /* ---------- Chapters ---------- */
+/* `from`/`to` are the chapter's span in years ago (0 = present); used by the chapter timeline. */
 window.CHAPTERS = [
   { id: "intro", n: "00", short: "Intro", title: "How We, the Indians, Came to Be",
     tag: "Deep time, cousins and the 0.1% genome",
-    blurb: "A tour of cosmic scale, our extinct Homo cousins and why DNA is rewriting prehistory." },
+    blurb: "A tour of cosmic scale, our extinct Homo cousins and why DNA is rewriting prehistory.",
+    from: 300000, to: 65000 },
   { id: "ch1", n: "01", short: "First Indians", title: "The First Indians",
     tag: "c. 65,000 years ago — Out of Africa to the subcontinent",
-    blurb: "Genetics, climate and fossils converge on a single successful exodus that reached India about 65,000 years ago." },
+    blurb: "Genetics, climate and fossils converge on a single successful exodus that reached India about 65,000 years ago.",
+    from: 65000, to: 9000 },
   { id: "ch2", n: "02", short: "First Farmers", title: "The First Farmers",
     tag: "c. 7000 BCE — Mehrgarh and the Zagros migrants",
-    blurb: "Agriculture arrives; Iranian farmers mix with First Indians and a new 'sauce' layer is added to the Indian pizza." },
+    blurb: "Agriculture arrives; Iranian farmers mix with First Indians and a new 'sauce' layer is added to the Indian pizza.",
+    from: 9000, to: 4600 },
   { id: "ch3", n: "03", short: "Harappans", title: "The First Urbanites: The Harappans",
     tag: "2600–1900 BCE — the largest civilization of its time",
-    blurb: "A civilization of planned cities, uniform weights and no palaces, and a script nobody has yet deciphered." },
+    blurb: "A civilization of planned cities, uniform weights and no palaces, and a script nobody has yet deciphered.",
+    from: 4600, to: 3900 },
   { id: "ch4", n: "04", short: "'Aryans'", title: "The Last Migrants: The ‘Aryans’",
     tag: "2000–1000 BCE — Steppe pastoralists enter South Asia",
-    blurb: "Ancient DNA, linguistics and the Rigveda point to Steppe migration, strongly male-driven, in the second millennium BCE." },
+    blurb: "Ancient DNA, linguistics and the Rigveda point to Steppe migration, strongly male-driven, in the second millennium BCE.",
+    from: 4000, to: 2000 },
   { id: "epi", n: "05", short: "Epilogue", title: "Seeing History the Right Side Up",
     tag: "Caste, the Indian pizza and what the story means",
-    blurb: "From mixing to endogamy: genetics suggests the caste system closed around 100 CE." }
+    blurb: "From mixing to endogamy: genetics suggests the caste system closed around 100 CE.",
+    from: 2000, to: 0 }
 ];
 
 /* ---------- Image manifest (all pictures embedded in the book) ---------- */

@@ -344,9 +344,9 @@
   const tl = $("#tl"), tlDetail = $("#tlDetail");
   const sortedEV = [...EV].sort((a, b) => b.ya - a.ya);
   $("#tlModes").innerHTML = Object.entries(MODES).map(([k, m]) => `<button aria-pressed="${k === tlMode}" data-m="${k}">${m.label.split(" · ")[0]}</button>`).join("");
-  $("#tlModes").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; tlMode = b.dataset.m; $$("#tlModes button").forEach(x => x.setAttribute("aria-pressed", x === b)); drawTimeline(); });
+  $("#tlModes").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; tlMode = b.dataset.m; $$("#tlModes button").forEach(x => x.setAttribute("aria-pressed", x === b)); drawTimeline(); syncUrl(); });
   $("#tlChips").innerHTML = CH.map(c => `<button class="chip" style="--dot:${chColor(c.id)}" aria-pressed="true" data-ch="${c.id}"><i></i>${c.short}</button>`).join("");
-  $("#tlChips").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; const on = b.getAttribute("aria-pressed") !== "true"; b.setAttribute("aria-pressed", on); on ? tlOn.add(b.dataset.ch) : tlOn.delete(b.dataset.ch); drawTimeline(); });
+  $("#tlChips").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; const on = b.getAttribute("aria-pressed") !== "true"; b.setAttribute("aria-pressed", on); on ? tlOn.add(b.dataset.ch) : tlOn.delete(b.dataset.ch); drawTimeline(); syncUrl(); });
 
   function drawTimeline() {
     const m = MODES[tlMode], NS = "http://www.w3.org/2000/svg", padL = 28, padR = 40, laneH = 32, top = 26, axisH = 34;
@@ -403,6 +403,27 @@
   tl.addEventListener("pointermove", e => { if (drag) tl.scrollLeft = drag.l - (e.clientX - drag.x); });
   tl.addEventListener("pointerup", () => { drag = null; tl.style.cursor = ""; });
   tl.addEventListener("pointercancel", () => { drag = null; tl.style.cursor = ""; });
+
+  /* chapter track: the book’s five chapters on one line (click a chapter to jump) */
+  const ctTrack = $("#ctTrack");
+  if (ctTrack) {
+    const chapterWhen = c => {
+      const one = y => y >= 12000 ? fmt(y) + " ya" : y > 2000 ? fmt(y - 2000) + " BCE" : y === 2000 ? "1 CE" : fmt(2000 - y) + " CE";
+      return c.to === 0 ? `${one(c.from)} → present` : `${one(c.from)} – ${one(c.to)}`;
+    };
+    ctTrack.innerHTML = CH.map(c => `<button class="ct-chip" type="button" data-c="${c.id}" aria-label="Jump to chapter ${c.n} ${c.title}"><span class="n">${c.n}</span><b>${c.title}</b><span class="tag">${c.tag}</span><span class="when">${chapterWhen(c)}</span></button>`).join("");
+    ctTrack.addEventListener("click", e => {
+      const b = e.target.closest("button"); if (!b) return;
+      $$(".ct-chip", ctTrack).forEach(x => x.setAttribute("aria-current", x === b));
+      location.hash = "#" + b.dataset.c;
+    });
+    const spy2 = new IntersectionObserver(es => es.forEach(e => {
+      if (!e.isIntersecting) return;
+      const chip = $(`.ct-chip[data-c="${e.target.id}"]`, ctTrack);
+      if (chip) $$(".ct-chip", ctTrack).forEach(x => x.setAttribute("aria-current", x === chip));
+    }), { rootMargin: "-10% 0px -10% 0px", threshold: .4 });
+    CH.forEach(c => { const s = document.getElementById(c.id); if (s) spy2.observe(s); });
+  }
 
   /* =========================================================
      JOURNEY (schematic Out-of-Africa scrubber)
@@ -521,7 +542,7 @@
     if (i < 0) return;
     aStory = i; aFree = false; const st = ST[i], m = ensureAtlas();
     m.setState({ t: st.t, routes: st.routes, sites: st.sites, selected: null }); m.fly(st.view, 1300);
-    aRange.value = ya2u(st.t); paintBadge(st.t); paintStory(); closeSite();
+    aRange.value = ya2u(st.t); paintBadge(st.t); paintStory(); closeSite(); syncUrl();
     if (scroll) $("#atlas").scrollIntoView();
   }
   function routeChips(ids) { const kinds = [...new Set(ids.map(id => window.ROUTES.find(r => r.id === id)?.kind).filter(Boolean))]; return kinds.map(k => `<span class="rk" style="--rc:${RK[k].slot ? `var(--s${RK[k].slot})` : "var(--gray)"}"><i></i>${RK[k].n}</span>`).join(""); }
@@ -558,12 +579,81 @@
     const m = ensureAtlas(); stopTour();
     $("#atlas").scrollIntoView();
     const t = ya != null ? ya : (s.from + s.to) / 2;
-    aFree = true; m.setState({ t, routes: null, sites: null }); aRange.value = ya2u(t); paintBadge(t); paintStory();
+    aFree = true; m.setState({ t, routes: null, sites: null }); aRange.value = ya2u(t); paintBadge(t); paintStory(); syncUrl();
     setTimeout(() => { m.focusSite(siteId); openSite(s); }, 350);
   }
   function stopTour() { clearInterval(aTimer); aTimer = null; $("#atlasPlay").textContent = "▶"; $("#atlasPlay").setAttribute("aria-label", "Play the guided tour"); }
+
+  /* ---------- state persistence: URL deep links + bookmarks ---------- */
+  function syncUrl() {
+    const p = snapshot();
+    const hash = location.hash;
+    try { history.replaceState(null, "", location.pathname + (p.toString() ? "?" + p : "") + hash); } catch { /* restricted URLs (e.g. file://) */ }
+  }
+  const snapshot = () => {
+    const p = new URLSearchParams(location.search);
+    if (tlMode) p.set("tl", tlMode);
+    const allOn = CH.every(c => tlOn.has(c.id));
+    if (!allOn) p.set("tlch", [...tlOn].join(",")); else p.delete("tlch");
+    if (aFree && aMap) { p.delete("story"); p.set("t", aRange.value); }
+    else if (aMap && aStory > 0 && !aFree) { p.delete("t"); p.set("story", ST[aStory].id); }
+    else { p.delete("t"); p.delete("story"); }
+    return p.toString();
+  };
+  function applyDeepLink() {
+    const p = new URLSearchParams(location.search);
+    tlMode = Object.hasOwn(MODES, p.get("tl")) ? p.get("tl") : "deep";
+    const chs = p.has("tlch") ? p.get("tlch").split(",") : CH.map(c => c.id);
+    tlOn.clear(); CH.forEach(c => { if (chs.includes(c.id)) tlOn.add(c.id); });
+    $$("#tlModes button").forEach(b => b.setAttribute("aria-pressed", b.dataset.m === tlMode));
+    $$("#tlChips button").forEach(b => b.setAttribute("aria-pressed", tlOn.has(b.dataset.ch)));
+    drawTimeline();
+    stopTour();
+    const story = ST.findIndex(s => s.id === p.get("story"));
+    if (story >= 0) goStory(story, true);
+    else if (p.get("t") != null) {
+      const n = +p.get("t"); const u = Number.isFinite(n) ? Math.min(1000, Math.max(0, n)) : 500;
+      const ya = u2ya(u); aFree = true;
+      const m = ensureAtlas(); m.setState({ t: ya, routes: null, sites: null });
+      aRange.value = String(u); paintBadge(ya); paintStory();
+    } else if (aMap) goStory(0);
+    const ch = p.get("ch");
+    if (ch && document.getElementById(ch)) document.getElementById(ch).scrollIntoView({ behavior: "smooth" });
+  }
+  /* bookmarks */
+  const bm = $("#bookmarkBtn"), bmMenu = $("#bookmarks");
+  const BM = "ei-bookmarks";
+  const loadBMs = () => { try { const l = JSON.parse(store.get(BM) || "[]"); return Array.isArray(l) ? l.map(b => ({ label: String(b.label || "Bookmark"), snap: String(b.snap || "") })) : []; } catch { return []; } };
+  const saveBM = () => {
+    const name = prompt("Bookmark name", "Atlas view"); if (name === null) return;
+    const list = loadBMs(); list.push({ label: name.trim() || "Atlas view", snap: snapshot() + location.hash });
+    store.set(BM, JSON.stringify(list)); paintBMs();
+  };
+  const jumpBM = snap => {
+    if (!snap) return;
+    try { history.pushState(null, "", location.pathname + "?" + snap); } catch { return; }
+    bmMenu.close(); applyDeepLink();
+    document.getElementById(location.hash.slice(1))?.scrollIntoView();
+  };
+  const paintBMs = () => {
+    const list = $("#bmList");
+    list.replaceChildren(...loadBMs().map((b, i) => {
+      const d = el("div", { class: "bm-item" });
+      const jb = el("button", { class: "bm-jump", type: "button", "aria-label": `Jump to bookmark ${b.label}` }); jb.textContent = b.label;
+      jb.addEventListener("click", () => jumpBM(b.snap));
+      const xb = el("button", { class: "bm-del", type: "button", "aria-label": `Delete bookmark ${b.label}` }, "✕");
+      xb.addEventListener("click", () => { const l = loadBMs(); l.splice(i, 1); store.set(BM, JSON.stringify(l)); paintBMs(); });
+      d.append(jb, xb); return d;
+    }));
+    if (!list.children.length) list.replaceChildren(el("p", { class: "bm-empty" }, "No bookmarks yet."));
+  };
+  bmMenu.addEventListener("click", e => { if (e.target === bmMenu) bmMenu.close(); });
+  $("#bmSave").addEventListener("click", saveBM);
+  bm.addEventListener("click", () => { if (bmMenu.open) bmMenu.close(); else { paintBMs(); bmMenu.showModal(); } });
+  if (aHost) addEventListener("popstate", applyDeepLink);
   if (aHost) {
     $("#storySteps").innerHTML = ST.map((st, i) => `<button type="button" role="tab" data-i="${i}" aria-selected="false" style="--accent:${chColor(st.ch)}"><span>${String(i + 1).padStart(2, "0")}</span>${st.title}</button>`).join("");
+    applyDeepLink();
     $("#storySteps").addEventListener("click", e => { const b = e.target.closest("button"); if (b) { stopTour(); goStory(+b.dataset.i); } });
     storyCard.addEventListener("click", e => {
       const b = e.target.closest("button"); if (!b) return;
@@ -573,7 +663,7 @@
       else if (b.dataset.ev) { const i = +b.dataset.ev; $("#timeline").scrollIntoView(); setTimeout(() => selectEvent(i, true), 350); }
     });
     siteCard.addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; if (b.dataset.zoom) aMap.focusSite(b.dataset.zoom, 6); if (b.hasAttribute("data-close")) closeSite(); });
-    aRange.addEventListener("input", () => { stopTour(); const ya = u2ya(+aRange.value); aFree = true; ensureAtlas().setState({ t: ya, routes: null, sites: null }); paintBadge(ya); paintStory(); });
+    aRange.addEventListener("input", () => { stopTour(); const ya = u2ya(+aRange.value); aFree = true; ensureAtlas().setState({ t: ya, routes: null, sites: null }); paintBadge(ya); paintStory(); syncUrl(); });
     // ticks + chapter bands on the time track
     const TICKS = [300000, 100000, 65000, 30000, 10000, 5000, 3000, 2000];
     $("#timeTicks").innerHTML = TICKS.map(t => `<span style="left:${ya2u(t) / 10}%">${t >= 12000 ? Math.round(t / 1000) + "k ya" : t > 2000 ? (t - 2000) + " BCE" : "0"}</span>`).join("");
@@ -590,7 +680,7 @@
     $("#atlasLayers").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; const on = b.getAttribute("aria-pressed") !== "true"; b.setAttribute("aria-pressed", on); ensureAtlas().setLayer(b.dataset.layer, on); });
     $("#atlasLegend").innerHTML = Object.entries(RK).map(([k, v]) => `<li><i class="${v.dash ? "dash" : ""}" style="background:${v.slot ? `var(--s${v.slot})` : "var(--gray)"}"></i><span>${v.n}</span></li>`).join("");
     // paint the panel now (stable layout), build the map lazily when it nears the viewport
-    aRange.value = ya2u(ST[0].t); paintBadge(ST[0].t); paintStory();
+    if (!aMap) { aRange.value = ya2u(ST[0].t); paintBadge(ST[0].t); paintStory(); }
     new IntersectionObserver((es, ob) => { if (es[0].isIntersecting) { ob.disconnect(); if (!aMap) goStory(aStory); } }, { rootMargin: "300px" }).observe(aHost);
     // links from chapters
     document.addEventListener("click", e => { const a = e.target.closest("[data-story]"); if (!a || a.closest("#storySteps")) return; e.preventDefault(); stopTour(); goStory(a.dataset.story, true); });
@@ -624,7 +714,11 @@
   const openPal = () => { pIn.value = ""; paintPal(); pal.showModal(); pIn.focus(); };
   const run = i => { const it = pItems[i]; if (!it) return; pal.close(); setTimeout(it.go, 60); };
   $("#searchBtn").addEventListener("click", openPal);
-  addEventListener("keydown", e => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); pal.open ? pal.close() : openPal(); } if (e.key === "/" && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && !pal.open) { e.preventDefault(); openPal(); } });
+  addEventListener("keydown", e => {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); pal.open ? pal.close() : openPal(); }
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "b") { e.preventDefault(); bmMenu.open ? bmMenu.close() : bmMenu.showModal(); paintBMs(); }
+    if (e.key === "/" && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && !pal.open) { e.preventDefault(); openPal(); }
+  });
   pIn.addEventListener("input", paintPal);
   pIn.addEventListener("keydown", e => {
     const mv = d => { pSel = (pSel + d + pItems.length) % Math.max(1, pItems.length); $$("#pList button").forEach((b, i) => { b.setAttribute("aria-selected", i === pSel); b.parentElement.setAttribute("aria-selected", i === pSel); }); $$("#pList button")[pSel]?.scrollIntoView({ block: "nearest" }); };
@@ -635,4 +729,5 @@
 
   /* ---------- boot ---------- */
   drawTimeline();
+  if ($("#quizModules")) Quiz.render($("#quizModules"));
 })();
