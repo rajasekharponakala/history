@@ -579,20 +579,14 @@
     const m = ensureAtlas(); stopTour();
     $("#atlas").scrollIntoView();
     const t = ya != null ? ya : (s.from + s.to) / 2;
-    aFree = true; m.setState({ t, routes: null, sites: null }); aRange.value = ya2u(t); paintBadge(t); paintStory();
+    aFree = true; m.setState({ t, routes: null, sites: null }); aRange.value = ya2u(t); paintBadge(t); paintStory(); syncUrl();
     setTimeout(() => { m.focusSite(siteId); openSite(s); }, 350);
   }
   function stopTour() { clearInterval(aTimer); aTimer = null; $("#atlasPlay").textContent = "▶"; $("#atlasPlay").setAttribute("aria-label", "Play the guided tour"); }
 
   /* ---------- state persistence: URL deep links + bookmarks ---------- */
   function syncUrl() {
-    const p = new URLSearchParams(location.search);
-    if (tlMode) p.set("tl", tlMode);
-    const allOn = CH.every(c => tlOn.has(c.id));
-    if (allOn) p.delete("tlch"); else p.set("tlch", [...tlOn].join(","));
-    if (aFree && aMap) { p.delete("story"); p.set("t", aRange.value); }
-    else if (aMap && aStory > 0 && !aFree) p.set("story", ST[aStory]?.id || "");
-    else { p.delete("t"); p.delete("story"); }
+    const p = snapshot();
     const hash = location.hash;
     try { history.replaceState(null, "", location.pathname + (p.toString() ? "?" + p : "") + hash); } catch { /* restricted URLs (e.g. file://) */ }
   }
@@ -602,23 +596,27 @@
     const allOn = CH.every(c => tlOn.has(c.id));
     if (!allOn) p.set("tlch", [...tlOn].join(",")); else p.delete("tlch");
     if (aFree && aMap) { p.delete("story"); p.set("t", aRange.value); }
-    else if (aMap && aStory > 0 && !aFree) p.set("story", ST[aStory]?.id || "");
+    else if (aMap && aStory > 0 && !aFree) { p.delete("t"); p.set("story", ST[aStory].id); }
     else { p.delete("t"); p.delete("story"); }
     return p.toString();
   };
   function applyDeepLink() {
     const p = new URLSearchParams(location.search);
-    if (["deep", "holo", "bronze"].includes(p.get("tl"))) tlMode = p.get("tl");
-    const chs = (p.get("tlch") || "").split(",").map(s => s.trim()).filter(Boolean);
-    if (chs.length) { tlOn.clear(); chs.forEach(id => tlOn.add(id)); }
-    const storyId = p.get("story");
-    if (storyId) { const i = ST.findIndex(s => s.id === storyId); if (i >= 0) goStory(i, true); }
+    tlMode = Object.hasOwn(MODES, p.get("tl")) ? p.get("tl") : "deep";
+    const chs = p.has("tlch") ? p.get("tlch").split(",") : CH.map(c => c.id);
+    tlOn.clear(); CH.forEach(c => { if (chs.includes(c.id)) tlOn.add(c.id); });
+    $$("#tlModes button").forEach(b => b.setAttribute("aria-pressed", b.dataset.m === tlMode));
+    $$("#tlChips button").forEach(b => b.setAttribute("aria-pressed", tlOn.has(b.dataset.ch)));
+    drawTimeline();
+    stopTour();
+    const story = ST.findIndex(s => s.id === p.get("story"));
+    if (story >= 0) goStory(story, true);
     else if (p.get("t") != null) {
       const n = +p.get("t"); const u = Number.isFinite(n) ? Math.min(1000, Math.max(0, n)) : 500;
       const ya = u2ya(u); aFree = true;
       const m = ensureAtlas(); m.setState({ t: ya, routes: null, sites: null });
       aRange.value = String(u); paintBadge(ya); paintStory();
-    }
+    } else if (aMap) goStory(0);
     const ch = p.get("ch");
     if (ch && document.getElementById(ch)) document.getElementById(ch).scrollIntoView({ behavior: "smooth" });
   }
@@ -626,13 +624,22 @@
   const bm = $("#bookmarkBtn"), bmMenu = $("#bookmarks");
   const BM = "ei-bookmarks";
   const loadBMs = () => { try { const l = JSON.parse(store.get(BM) || "[]"); return Array.isArray(l) ? l.map(b => ({ label: String(b.label || "Bookmark"), snap: String(b.snap || "") })) : []; } catch { return []; } };
-  const saveBM = snap => { const label = (prompt("Bookmark name", snap || "Bookmark") || "").trim() || snap || "Bookmark"; loadBMs().push({ label, snap }); store.set(BM, JSON.stringify(loadBMs())); paintBMs(); };
-  const jumpBM = snap => { if (!snap) return; try { history.pushState(null, "", location.pathname + (snap ? "?" + snap : "")); } catch { return; } applyDeepLink(); bmMenu.close(); };
+  const saveBM = () => {
+    const name = prompt("Bookmark name", "Atlas view"); if (name === null) return;
+    const list = loadBMs(); list.push({ label: name.trim() || "Atlas view", snap: snapshot() + location.hash });
+    store.set(BM, JSON.stringify(list)); paintBMs();
+  };
+  const jumpBM = snap => {
+    if (!snap) return;
+    try { history.pushState(null, "", location.pathname + "?" + snap); } catch { return; }
+    bmMenu.close(); applyDeepLink();
+    document.getElementById(location.hash.slice(1))?.scrollIntoView();
+  };
   const paintBMs = () => {
     const list = $("#bmList");
     list.replaceChildren(...loadBMs().map((b, i) => {
       const d = el("div", { class: "bm-item" });
-      const jb = el("button", { class: "bm-jump", type: "button", "aria-label": `Jump to bookmark ${b.label}` }, b.label);
+      const jb = el("button", { class: "bm-jump", type: "button", "aria-label": `Jump to bookmark ${b.label}` }); jb.textContent = b.label;
       jb.addEventListener("click", () => jumpBM(b.snap));
       const xb = el("button", { class: "bm-del", type: "button", "aria-label": `Delete bookmark ${b.label}` }, "✕");
       xb.addEventListener("click", () => { const l = loadBMs(); l.splice(i, 1); store.set(BM, JSON.stringify(l)); paintBMs(); });
@@ -641,11 +648,12 @@
     if (!list.children.length) list.replaceChildren(el("p", { class: "bm-empty" }, "No bookmarks yet."));
   };
   bmMenu.addEventListener("click", e => { if (e.target === bmMenu) bmMenu.close(); });
-  bmMenu.addEventListener("open", () => paintBMs());
-  bm.addEventListener("click", () => (bmMenu.open ? bmMenu.close() : bmMenu.showModal()));
+  $("#bmSave").addEventListener("click", saveBM);
+  bm.addEventListener("click", () => { if (bmMenu.open) bmMenu.close(); else { paintBMs(); bmMenu.showModal(); } });
+  if (aHost) addEventListener("popstate", applyDeepLink);
   if (aHost) {
-    applyDeepLink();
     $("#storySteps").innerHTML = ST.map((st, i) => `<button type="button" role="tab" data-i="${i}" aria-selected="false" style="--accent:${chColor(st.ch)}"><span>${String(i + 1).padStart(2, "0")}</span>${st.title}</button>`).join("");
+    applyDeepLink();
     $("#storySteps").addEventListener("click", e => { const b = e.target.closest("button"); if (b) { stopTour(); goStory(+b.dataset.i); } });
     storyCard.addEventListener("click", e => {
       const b = e.target.closest("button"); if (!b) return;

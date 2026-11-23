@@ -32,7 +32,9 @@
   /* per-module shell: head, panel, footer */
   function shell(id, title, tagline) {
     const card = el("article", { class: "q-card", "data-quiz": id });
-    card.append(el("div", { class: "q-head" }, el("span", { class: "q-title" }, title), el("span", { class: "q-tag" }, tagline)));
+    const head = el("div", { class: "q-head" });
+    head.append(el("span", { class: "q-title" }, title), el("span", { class: "q-tag" }, tagline));
+    card.append(head);
     const panel = el("div", { class: "q-panel", role: "group", "aria-label": title });
     card.append(panel);
     const footer = el("div", { class: "q-footer" });
@@ -82,7 +84,7 @@
     sh.panel.replaceChildren(); sh.footer.replaceChildren();
     const poolEl = el("div", { class: "q-opts q-rank", role: "group", "aria-label": question });
     const rankEl = el("div", { class: "q-rank-list" });
-    const rank = [], expected = [...items].sort((a, b) => (a.ya || 0) - (b.ya || 0));
+    const rank = [], expected = [...items].sort((a, b) => b.ya - a.ya);
     const state = { correct: 0, total: 0 };
     const done = el("p", { class: "q-feedback" });
     const check = () => {
@@ -102,12 +104,14 @@
     showScore(mod, sh, state);
   }
 
+  const datedSample = n => [...new Map(shuffle(EV).map(e => [e.ya, e])).values()].slice(0, n);
+
   const modules = [
     {
       id: "chronology", title: "Chronology quiz", tagline: "Which of these happened first?",
       draw(sh) {
-        const evs = shuffle(EV).slice(0, 6);
-        const oldest = [...evs].sort((a, b) => (b.ya || 0) - (a.ya || 0)).slice(-1)[0];
+        const evs = datedSample(6);
+        const oldest = evs.reduce((a, b) => a.ya > b.ya ? a : b);
         drawPick(this, sh, "Which of these events happened first?", evs.map(e => ({ label: `${e.t} (${fmtYa(e.ya)})`, correct: e === oldest })));
       }
     },
@@ -115,7 +119,7 @@
       id: "order", title: "Order the events", tagline: "Oldest → newest, five stops on the timeline.",
       draw(sh) {
         drawRank(this, sh, "Click the events in the order they happened — oldest first.",
-          shuffle(EV).slice(0, 5).map(e => ({ label: e.t, ya: e.ya || 0, id: e.t })));
+          datedSample(5).map(e => ({ label: e.t, ya: e.ya, id: e.ya })));
       }
     },
     {
@@ -123,8 +127,8 @@
       draw(sh) {
         const all = shuffle(SITES).slice(0, 4);
         const a = all[0];
-        drawPick(this, sh, `Which of these places matches the story? — “${a.n}”, ${a.where}`,
-          all.map(s => ({ label: s.n, correct: s === a })));
+        drawPick(this, sh, `In which region is ${a.n}?`,
+          shuffle([...new Set([a.where, ...shuffle(SITES).map(s => s.where)])].slice(0, 4)).map(where => ({ label: where, correct: where === a.where })));
       }
     },
     {
@@ -137,10 +141,11 @@
       }
     },
     {
-      id: "truefalse", title: "True or False", tagline: "About the book’s facts.",
+      id: "truefalse", title: "Match a fact", tagline: "Find the atlas topic that fits the clue.",
       draw(sh) {
-        const f = shuffle(FACTS)[0];
-        drawPick(this, sh, `True or False: “${f[0]}”`, [{ label: "True", correct: true }, { label: "False", correct: false }]);
+        const facts = shuffle(FACTS).slice(0, 4), f = facts[0];
+        drawPick(this, sh, `Which topic matches this fact from the book? “${f[1]}”`,
+          shuffle(facts).map(option => ({ label: option[0], correct: option === f })));
       }
     },
     {
